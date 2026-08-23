@@ -58,8 +58,14 @@ export class FlightDirectorHUD {
           </div>
           <div class="brand-text-col">
             <span class="brand-title">ASTRODYNE <span class="brand-highlight">PRIME</span></span>
-            <span class="brand-subtitle">Relativistic Spaceflight & AI Orbital Lab</span>
+            <span class="brand-subtitle">Relativistic Spaceflight & AXIOM Multi-Physics</span>
           </div>
+        </div>
+
+        <!-- Center Mode Switcher -->
+        <div class="hud-mode-pill-group">
+          <button id="btn-nav-spaceflight" class="hud-mode-pill-btn active">🌌 SPACEFLIGHT</button>
+          <button id="btn-nav-builder" class="hud-mode-pill-btn">🛠️ AXIOM BUILDER</button>
         </div>
 
         <!-- Center Time Warp / Mission Clock -->

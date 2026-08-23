@@ -11,7 +11,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "lucide": "^0.475.0"
+    "@dimforge/rapier3d-compat": "^0.20.0",
+    "@types/three": "^0.185.4",
+    "lucide": "^0.475.0",
+    "manifold-3d": "^3.5.1",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@webgpu/types": "^0.1.54",

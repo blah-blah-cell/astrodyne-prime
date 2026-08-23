@@ -1,13 +1,17 @@
-import { ControlsPanel } from './controls-panel';
-import { PresetsPanel } from './presets-panel';
-import { TelemetryPanel } from './telemetry-panel';
-import { FlightDirectorHUD } from './flight-director-hud';
-import { AstraDrawer } from './astra-drawer';
-import { AstraAICopilot } from '../ai/ai-copilot';
-import { AIManeuverAction, CameraViewMode, MouseTool, PresetConfig } from '../physics/types';
-import { NBodyEngine } from '../physics/nbody-engine';
-import { ParticleRenderer } from '../renderer/renderer';
-import { PRESETS } from '../physics/presets';
+import { ControlsPanel } from './controls-panel.js';
+import { PresetsPanel } from './presets-panel.js';
+import { TelemetryPanel } from './telemetry-panel.js';
+import { FlightDirectorHUD } from './flight-director-hud.js';
+import { AstraDrawer } from './astra-drawer.js';
+import { AstraAICopilot } from '../ai/ai-copilot.js';
+import { AIManeuverAction, CameraViewMode, MouseTool, PresetConfig, RocketStage } from '../physics/types.js';
+import { NBodyEngine } from '../physics/nbody-engine.js';
+import { ParticleRenderer } from '../renderer/renderer.js';
+import { PRESETS } from '../physics/presets.js';
+import { PartGraph } from '../builder/part-graph.js';
+import { PART_CATALOG } from '../builder/catalog.js';
+import { BuilderViewport } from '../builder/builder-view.js';
+import { BuilderUI } from '../builder/builder-ui.js';
 
 export class UIController {
   public telemetryPanel: TelemetryPanel;
@@ -17,13 +21,17 @@ export class UIController {
   public astraDrawer: AstraDrawer;
   public astraCopilot: AstraAICopilot;
 
+  // AXIOM Modular Builder Subsystem
+  public partGraph: PartGraph;
+  public builderViewport: BuilderViewport;
+  public builderUI: BuilderUI;
+  public currentMode: 'SPACEFLIGHT' | 'BUILDER' = 'SPACEFLIGHT';
+
   private engine: NBodyEngine;
   private renderer: ParticleRenderer;
   private onLoadPreset: (preset: PresetConfig, count: number) => void;
 
   public activeTab: 'presets' | 'controls' | 'telemetry' = 'presets';
-
-  // Active Key States for smooth continuous flight controls
   private activeKeys = new Set<string>();
 
   constructor(
@@ -35,7 +43,7 @@ export class UIController {
     this.renderer = renderer;
     this.onLoadPreset = onLoadPreset;
 
-    // AI Copilot Instance
+    // 1. AI Copilot Instance
     this.astraCopilot = new AstraAICopilot(
       engine,
       engine.spacecraft,
@@ -48,7 +56,7 @@ export class UIController {
     const presetsContainer = document.getElementById('presets-content')!;
     const controlsContainer = document.getElementById('controls-content')!;
 
-    // Flight Director HUD (Top Bar + Cockpit Flight Deck)
+    // 2. Flight Director HUD
     this.flightDirectorHUD = new FlightDirectorHUD(
       hudContainer,
       engine,
@@ -56,11 +64,39 @@ export class UIController {
       () => this.astraDrawer.toggleDrawer()
     );
 
-    // ASTRA AI Assistant Drawer
+    // 3. ASTRA AI Drawer
     this.astraDrawer = new AstraDrawer(
       astraContainer,
       this.astraCopilot,
       (action) => this.handleAIManeuverAction(action)
+    );
+
+    // 4. AXIOM Builder Engine & Viewport
+    this.partGraph = new PartGraph('Custom Modular Rocket');
+    this.partGraph.registerDefinitions(PART_CATALOG);
+
+    const builderViewportContainer = document.createElement('div');
+    builderViewportContainer.id = 'builder-viewport-container';
+    builderViewportContainer.style.position = 'absolute';
+    builderViewportContainer.style.top = '0';
+    builderViewportContainer.style.left = '0';
+    builderViewportContainer.style.width = '100vw';
+    builderViewportContainer.style.height = '100vh';
+    builderViewportContainer.style.zIndex = '5';
+    builderViewportContainer.style.display = 'none';
+    document.body.appendChild(builderViewportContainer);
+
+    this.builderViewport = new BuilderViewport(builderViewportContainer, this.partGraph);
+
+    const builderContainer = document.createElement('div');
+    builderContainer.id = 'builder-ui-container';
+    document.body.appendChild(builderContainer);
+
+    this.builderUI = new BuilderUI(
+      builderContainer,
+      this.builderViewport,
+      this.partGraph,
+      () => this.handleLaunchCustomMachine()
     );
 
     this.telemetryPanel = new TelemetryPanel(telemContainer, engine.telemetry);
@@ -84,8 +120,86 @@ export class UIController {
     );
 
     this.initTabs();
-    this.initCanvasMouseEvents();
+    this.initModeNavigation();
     this.initKeyboardControls();
+  }
+
+  private initModeNavigation(): void {
+    const btnSpace = document.getElementById('btn-nav-spaceflight');
+    const btnBuilder = document.getElementById('btn-nav-builder');
+    const hudPanel = document.getElementById('hud-left-panel');
+    const scHud = document.getElementById('spacecraft-hud');
+
+    btnSpace?.addEventListener('click', () => {
+      this.currentMode = 'SPACEFLIGHT';
+      btnSpace.classList.add('active');
+      btnBuilder?.classList.remove('active');
+
+      if (hudPanel) hudPanel.style.display = 'flex';
+      if (scHud) scHud.style.display = 'flex';
+      this.builderUI.setVisible(false);
+      this.renderer.params.cameraMode = CameraViewMode.CHASE_SPACECRAFT;
+    });
+
+    btnBuilder?.addEventListener('click', () => {
+      this.currentMode = 'BUILDER';
+      btnBuilder.classList.add('active');
+      btnSpace?.classList.remove('active');
+
+      if (hudPanel) hudPanel.style.display = 'none';
+      if (scHud) scHud.style.display = 'none';
+      this.builderUI.setVisible(true);
+      this.builderUI.updateTelemetry();
+    });
+  }
+
+  private handleLaunchCustomMachine(): void {
+    const totalMass = this.partGraph.assembly.totalMassKg || 5.0;
+    
+    let totalThrustN = 0;
+    let propellantKg = 0;
+    let burnSec = 3.0;
+
+    for (const [_, inst] of this.partGraph.assembly.parts.entries()) {
+      const def = this.partGraph.getDefinition(inst.definitionId);
+      if (def?.properties?.thrustN) {
+        totalThrustN += def.properties.thrustN;
+        propellantKg += def.properties.propellantMassKg || 0.5;
+        burnSec = def.properties.burnTimeSec || 3.0;
+      }
+    }
+
+    if (totalThrustN === 0) {
+      totalThrustN = 800;
+      propellantKg = totalMass * 0.4;
+    }
+
+    const customStage: RocketStage = {
+      id: 1,
+      name: 'AXIOM Custom Booster',
+      dryMass: Math.max(1.0, totalMass - propellantKg),
+      fuelMass: propellantKg,
+      maxFuelMass: propellantKg,
+      maxThrust: totalThrustN / 100,
+      isp: 280,
+      burnRate: propellantKg / burnSec,
+      ignited: true,
+      separated: false
+    };
+
+    this.engine.spacecraft.active = true;
+    this.engine.spacecraft.name = 'AXIOM-1 MK-I';
+    this.engine.spacecraft.stages = [customStage];
+    this.engine.spacecraft.currentStageIndex = 0;
+    this.engine.spacecraft.position = [0, 10.5, 0];
+    this.engine.spacecraft.velocity = [0, 0, 0];
+    this.engine.spacecraft.throttle = 1.0;
+    this.engine.spacecraft.isLaunchPad = true;
+    this.engine.spacecraft.calculateDeltaV();
+    this.engine.spacecraft.updateKeplerianElements();
+
+    document.getElementById('btn-nav-spaceflight')?.click();
+    console.log(`[AXIOM] Launched Custom Machine with ${totalThrustN}N thrust!`);
   }
 
   private initTabs(): void {
@@ -130,95 +244,21 @@ export class UIController {
     }
   }
 
-  private initCanvasMouseEvents(): void {
-    const canvas = this.renderer.canvas;
-    let isInteracting = false;
-
-    canvas.addEventListener('mousedown', (e) => {
-      if (this.controlsPanel.currentTool === MouseTool.ORBIT_CAMERA) {
-        return;
-      }
-
-      if (e.button === 0) {
-        isInteracting = true;
-        const rect = canvas.getBoundingClientRect();
-        const world = this.renderer.camera.screenToWorldPlane(
-          e.clientX - rect.left,
-          e.clientY - rect.top,
-          canvas.width,
-          canvas.height
-        );
-
-        if (world) {
-          if (this.controlsPanel.currentTool === MouseTool.BLACK_HOLE_SPAWN) {
-            this.engine.spawnBlackHole(world[0], world[1], world[2], 5000);
-          } else {
-            this.engine.mouseActive = true;
-            this.engine.mouseWorldPos = world;
-          }
-        }
-      }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isInteracting) return;
-      const rect = canvas.getBoundingClientRect();
-      const world = this.renderer.camera.screenToWorldPlane(
-        e.clientX - rect.left,
-        e.clientY - rect.top,
-        canvas.width,
-        canvas.height
-      );
-
-      if (world) {
-        this.engine.mouseWorldPos = world;
-      }
-    });
-
-    window.addEventListener('mouseup', () => {
-      isInteracting = false;
-      this.engine.mouseActive = false;
-    });
-  }
-
   private initKeyboardControls(): void {
     window.addEventListener('keydown', (e) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
       this.activeKeys.add(e.code);
 
-      // Single-shot keys
+      const sc = this.engine.spacecraft;
+      if (!sc || !sc.active) return;
+
+      if (e.code === 'KeyZ') sc.throttle = 1.0;
+      if (e.code === 'KeyX') sc.throttle = 0.0;
       if (e.code === 'Space') {
         e.preventDefault();
-        this.engine.params.paused = !this.engine.params.paused;
-        this.controlsPanel.render();
-      } else if (e.code === 'KeyR') {
-        const currentPreset = PRESETS.find(p => p.id === this.presetsPanel.currentPresetId) || PRESETS[0];
-        this.onLoadPreset(currentPreset, this.presetsPanel.selectedCount);
-      } else if (e.code === 'KeyG') {
-        this.renderer.params.showGrid = !this.renderer.params.showGrid;
-        this.controlsPanel.render();
-      } else if (e.code === 'KeyO') {
-        this.renderer.params.showOrbits = !this.renderer.params.showOrbits;
-        this.controlsPanel.render();
-      } else if (e.code === 'KeyT') {
-        this.astraDrawer.toggleDrawer();
-      } else if (e.code === 'KeyV') {
-        const cur = this.renderer.params.cameraMode;
-        const next = cur === CameraViewMode.ORBIT
-          ? CameraViewMode.CHASE_SPACECRAFT
-          : cur === CameraViewMode.CHASE_SPACECRAFT
-          ? CameraViewMode.COCKPIT_POV
-          : CameraViewMode.ORBIT;
-        this.renderer.params.cameraMode = next;
-      } else if (e.code === 'KeyZ') {
-        this.engine.spacecraft.throttle = 1.0;
-      } else if (e.code === 'KeyX') {
-        if (e.shiftKey) {
-          this.engine.spacecraft.separateStage();
-        } else {
-          this.engine.spacecraft.throttle = 0.0;
-        }
+        sc.separateStage();
       }
     });
 
@@ -228,31 +268,38 @@ export class UIController {
   }
 
   public update(): void {
+    this.flightDirectorHUD.update();
+    if (this.activeTab === 'telemetry') {
+      this.telemetryPanel.update();
+    }
+
+    if (this.currentMode === 'BUILDER') {
+      this.builderUI.updateTelemetry();
+      this.builderViewport.render();
+    }
+
     const sc = this.engine.spacecraft;
+    if (sc && sc.active && this.currentMode === 'SPACEFLIGHT') {
+      if (this.activeKeys.has('ShiftLeft') || this.activeKeys.has('ShiftRight')) {
+        sc.throttle = Math.min(1.0, sc.throttle + 0.02);
+      }
+      if (this.activeKeys.has('ControlLeft') || this.activeKeys.has('ControlRight')) {
+        sc.throttle = Math.max(0.0, sc.throttle - 0.02);
+      }
 
-    if (sc && sc.active) {
-      let pitch = 0;
-      let yaw = 0;
-      let roll = 0;
-
-      if (this.activeKeys.has('KeyW') || this.activeKeys.has('ArrowUp')) pitch -= 1.0;
-      if (this.activeKeys.has('KeyS') || this.activeKeys.has('ArrowDown')) pitch += 1.0;
-      if (this.activeKeys.has('KeyA') || this.activeKeys.has('ArrowLeft')) yaw -= 1.0;
-      if (this.activeKeys.has('KeyD') || this.activeKeys.has('ArrowRight')) yaw += 1.0;
+      let pitch = 0, yaw = 0, roll = 0;
+      if (this.activeKeys.has('KeyW')) pitch += 1.0;
+      if (this.activeKeys.has('KeyS')) pitch -= 1.0;
+      if (this.activeKeys.has('KeyA')) yaw -= 1.0;
+      if (this.activeKeys.has('KeyD')) yaw += 1.0;
       if (this.activeKeys.has('KeyQ')) roll -= 1.0;
       if (this.activeKeys.has('KeyE')) roll += 1.0;
 
-      sc.rcsTorque = [pitch, yaw, roll];
-
-      if (this.activeKeys.has('ShiftLeft') || this.activeKeys.has('ShiftRight')) {
-        sc.throttle = Math.min(sc.throttle + 0.02, 1.0);
-      }
-      if (this.activeKeys.has('ControlLeft') || this.activeKeys.has('ControlRight')) {
-        sc.throttle = Math.max(sc.throttle - 0.02, 0.0);
+      if (pitch !== 0 || yaw !== 0 || roll !== 0) {
+        sc.rcsTorque = [pitch, yaw, roll];
+      } else {
+        sc.rcsTorque = [0, 0, 0];
       }
     }
-
-    this.flightDirectorHUD.update();
-    this.telemetryPanel.update();
   }
 }

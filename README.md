@@ -169,3 +169,18 @@ npm run preview
 ## 📜 License
 
 MIT License © 2026 ASTRODYNE PRIME Contributors.
+
+
+---
+
+## 🛠️ AXIOM Modular Machine & Rocket Builder (Phase 1 Integrated)
+
+ASTRODYNE PRIME now natively embeds the **AXIOM Modular Multi-Physics & CAD Assembly Engine** (*Trailmakers meets Fusion360 & Gazebo*).
+
+<img src="screenshots/astrodyne_unified_axiom_builder.png" width="100%" alt="AXIOM Modular Builder in ASTRODYNE" />
+
+### Core Builder Features:
+* **Intelligent 3D Physical Snap Sockets:** `CYLINDRICAL_AXIAL`, `FLANGE_COUPLER`, `HEX_BOLT_MOUNT`, `HINGE_PIVOT`, `SNAP_GRID`.
+* **Proximity Snapping:** Automatic detection and flush quaternion alignment for modular parts.
+* **Part Graph DAG & Mass Invariants:** Real-time center of mass ($C_m$) tracking and total mass summation.
+* **Direct Spaceflight Ignition:** Build your custom modular multi-stage rocket in the builder, then click **"🚀 Launch Vehicle to Space"** to immediately fly it with relativistic N-body gravity, Tsiolkovsky mass depletion, and SAS autopilot guidance!
