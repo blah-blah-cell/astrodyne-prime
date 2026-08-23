@@ -75,7 +75,7 @@ export class ControlsPanel {
 
       <!-- Physics Solver Engine Settings -->
       <div class="panel-section">
-        <div class="panel-section-title">PHYSICS KERNEL CONFIG</div>
+        <div class="panel-section-title">ASTRODYNAMICS SOLVER CONFIG</div>
 
         <div class="control-group">
           <div class="control-row">
@@ -107,10 +107,18 @@ export class ControlsPanel {
 
         <div class="control-group">
           <div class="control-row">
+            <span class="control-label">Time Warp Multiplier</span>
+            <span class="control-val" id="val-timewarp">${this.simParams.timeWarp}×</span>
+          </div>
+          <input type="range" id="range-timewarp" min="1" max="1000" step="1" value="${this.simParams.timeWarp}">
+        </div>
+
+        <div class="control-group">
+          <div class="control-row">
             <span class="control-label">Substeps / Frame</span>
             <span class="control-val" id="val-substeps">${this.simParams.substeps}</span>
           </div>
-          <input type="range" id="range-substeps" min="1" max="8" step="1" value="${this.simParams.substeps}">
+          <input type="range" id="range-substeps" min="1" max="12" step="1" value="${this.simParams.substeps}">
         </div>
 
         <div class="control-group">
@@ -203,6 +211,38 @@ export class ControlsPanel {
             <span class="toggle-text">Galactic Reference Grid</span>
           </label>
         </div>
+
+        <div class="control-toggle-row">
+          <label class="toggle-container">
+            <input type="checkbox" id="chk-orbits" ${this.renderParams.showOrbits ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Keplerian Orbital Splines</span>
+          </label>
+        </div>
+
+        <div class="control-toggle-row">
+          <label class="toggle-container">
+            <input type="checkbox" id="chk-guidance" ${this.renderParams.showGuidanceVectors ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+            <span class="toggle-text">Flight Guidance Vectors (Prograde)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Flight Controls Cheat Sheet -->
+      <div class="panel-section">
+        <div class="panel-section-title">FLIGHT DECK KEYBOARD CONTROLS</div>
+        <div class="controls-cheat-sheet">
+          <div class="cheat-row"><span>Pitch Down / Up</span><kbd>W</kbd> / <kbd>S</kbd></div>
+          <div class="cheat-row"><span>Yaw Left / Right</span><kbd>A</kbd> / <kbd>D</kbd></div>
+          <div class="cheat-row"><span>Roll CCW / CW</span><kbd>Q</kbd> / <kbd>E</kbd></div>
+          <div class="cheat-row"><span>Throttle Max / Cut</span><kbd>Z</kbd> / <kbd>X</kbd></div>
+          <div class="cheat-row"><span>Throttle Up / Down</span><kbd>Shift</kbd> / <kbd>Ctrl</kbd></div>
+          <div class="cheat-row"><span>Stage Separation</span><kbd>X</kbd> (or Button)</div>
+          <div class="cheat-row"><span>Toggle Pause</span><kbd>Space</kbd></div>
+          <div class="cheat-row"><span>Toggle Grid</span><kbd>G</kbd></div>
+          <div class="cheat-row"><span>Restart Scenario</span><kbd>R</kbd></div>
+        </div>
       </div>
     `;
 
@@ -257,6 +297,10 @@ export class ControlsPanel {
       this.simParams.timeStep = val;
     }, 3);
 
+    this.bindSlider('#range-timewarp', '#val-timewarp', (val) => {
+      this.simParams.timeWarp = Math.round(val);
+    }, 0);
+
     this.bindSlider('#range-substeps', '#val-substeps', (val) => {
       this.simParams.substeps = Math.round(val);
     }, 0);
@@ -303,6 +347,18 @@ export class ControlsPanel {
       this.renderParams.showGrid = chkGrid.checked;
       this.onParamChange();
     });
+
+    const chkOrbits = this.container.querySelector('#chk-orbits') as HTMLInputElement;
+    chkOrbits.addEventListener('change', () => {
+      this.renderParams.showOrbits = chkOrbits.checked;
+      this.onParamChange();
+    });
+
+    const chkGuidance = this.container.querySelector('#chk-guidance') as HTMLInputElement;
+    chkGuidance.addEventListener('change', () => {
+      this.renderParams.showGuidanceVectors = chkGuidance.checked;
+      this.onParamChange();
+    });
   }
 
   private bindSlider(
@@ -317,7 +373,7 @@ export class ControlsPanel {
 
     slider.addEventListener('input', () => {
       const val = parseFloat(slider.value);
-      valEl.textContent = val.toFixed(decimals);
+      valEl.textContent = decimals === 0 ? `${Math.round(val)}×` : val.toFixed(decimals);
       onValue(val);
       this.onParamChange();
     });

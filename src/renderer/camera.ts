@@ -1,8 +1,11 @@
+import { CameraViewMode } from '../physics/types';
+import { Spacecraft } from '../physics/spacecraft';
+
 export class Camera {
   public target: [number, number, number] = [0, 0, 0];
   public distance = 400;
-  public minDistance = 5;
-  public maxDistance = 5000;
+  public minDistance = 2;
+  public maxDistance = 20000;
 
   public azimuth = Math.PI * 0.25; // horizontal angle
   public elevation = Math.PI * 0.2; // vertical angle
@@ -14,8 +17,10 @@ export class Camera {
 
   public fov = (55 * Math.PI) / 180;
   public aspect = 1.0;
-  public near = 1.0;
-  public far = 10000.0;
+  public near = 0.5;
+  public far = 50000.0;
+
+  public mode: CameraViewMode = CameraViewMode.ORBIT;
 
   // Matrices (16 floats column-major)
   public viewMatrix = new Float32Array(16);
@@ -52,6 +57,57 @@ export class Camera {
 
   public setTarget(x: number, y: number, z: number): void {
     this.targetCenter = [x, y, z];
+    this.target = [x, y, z];
+  }
+
+  public updateWithSpacecraft(spacecraft: Spacecraft, mode: CameraViewMode, damping = 0.15): void {
+    this.mode = mode;
+
+    if (mode === CameraViewMode.COCKPIT_POV && spacecraft.active) {
+      // First-person cockpit POV looking forward
+      const sPos = spacecraft.position;
+      const fwd = spacecraft.forward;
+      const up = spacecraft.up;
+
+      const eyeX = sPos[0] + fwd[0] * 1.5 + up[0] * 0.8;
+      const eyeY = sPos[1] + fwd[1] * 1.5 + up[1] * 0.8;
+      const eyeZ = sPos[2] + fwd[2] * 1.5 + up[2] * 0.8;
+
+      const lookX = eyeX + fwd[0] * 100.0;
+      const lookY = eyeY + fwd[1] * 100.0;
+      const lookZ = eyeZ + fwd[2] * 100.0;
+
+      this.eyePos[0] = eyeX;
+      this.eyePos[1] = eyeY;
+      this.eyePos[2] = eyeZ;
+      this.eyePos[3] = 1.0;
+
+      this.target = [lookX, lookY, lookZ];
+
+      this.lookAt([eyeX, eyeY, eyeZ], [lookX, lookY, lookZ], up, this.viewMatrix);
+      this.perspective(this.fov, this.aspect, this.near, this.far, this.projMatrix);
+      this.multiplyMatrices(this.projMatrix, this.viewMatrix, this.viewProjMatrix);
+      this.invertMatrix(this.viewMatrix, this.invViewMatrix);
+      this.invertMatrix(this.viewProjMatrix, this.invViewProjMatrix);
+      return;
+    }
+
+    if (mode === CameraViewMode.CHASE_SPACECRAFT && spacecraft.active) {
+      // Third-person chase camera locked on spacecraft
+      const sPos = spacecraft.position;
+      this.target[0] += (sPos[0] - this.target[0]) * damping * 1.8;
+      this.target[1] += (sPos[1] - this.target[1]) * damping * 1.8;
+      this.target[2] += (sPos[2] - this.target[2]) * damping * 1.8;
+
+      this.azimuth += (this.targetAzimuth - this.azimuth) * damping;
+      this.elevation += (this.targetElevation - this.elevation) * damping;
+      this.distance += (this.targetDistance - this.distance) * damping;
+      this.updateMatrices();
+      return;
+    }
+
+    // Default Free Orbit Camera
+    this.update(damping);
   }
 
   public update(damping = 0.15): void {

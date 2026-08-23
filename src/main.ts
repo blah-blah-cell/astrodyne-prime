@@ -1,4 +1,12 @@
-import { AlgorithmType, ColorPalette, IntegratorType, PresetConfig, RenderParams, SimulationParams } from './physics/types';
+import {
+  AlgorithmType,
+  CameraViewMode,
+  ColorPalette,
+  IntegratorType,
+  PresetConfig,
+  RenderParams,
+  SimulationParams
+} from './physics/types';
 import { TelemetryTracker } from './physics/telemetry';
 import { NBodyEngine } from './physics/nbody-engine';
 import { ParticleRenderer } from './renderer/renderer';
@@ -53,33 +61,37 @@ async function main(): Promise<void> {
 
   // Default Simulation Parameters
   const simParams: SimulationParams = {
-    numParticles: 100000,
-    timeStep: 0.08,
+    numParticles: 50000,
+    timeStep: 0.04,
     substeps: 1,
     gravityConstant: 1.0,
-    softening: 4.5,
-    theta: 0.6,
+    softening: 4.0,
+    theta: 0.5,
     algorithm: AlgorithmType.BARNES_HUT,
     integrator: IntegratorType.VELOCITY_VERLET,
     enableCollisions: false,
     collisionRadius: 2.0,
     enableRelativisticPrecession: false,
     damping: 0.0,
-    paused: false
+    paused: false,
+    timeWarp: 1
   };
 
   // Default Render Parameters
   const renderParams: RenderParams = {
-    pointSize: 1.8,
-    exposure: 1.1,
-    bloomIntensity: 1.2,
-    bloomThreshold: 0.8,
+    pointSize: 2.0,
+    exposure: 1.2,
+    bloomIntensity: 1.3,
+    bloomThreshold: 0.75,
     colorPalette: ColorPalette.BLACKBODY_PLANCK,
     trailPersistence: 0.0,
     showGrid: true,
     showAxes: true,
     showBVHBounds: false,
-    brightnessScale: 1.2
+    showOrbits: true,
+    showGuidanceVectors: true,
+    brightnessScale: 1.3,
+    cameraMode: CameraViewMode.CHASE_SPACECRAFT
   };
 
   const telemetry = new TelemetryTracker();
@@ -94,13 +106,36 @@ async function main(): Promise<void> {
     simParams.theta = preset.recommendedTheta;
     simParams.gravityConstant = preset.defaultG;
     simParams.timeStep = preset.defaultDt;
+    if (preset.cameraMode) {
+      renderParams.cameraMode = preset.cameraMode;
+    }
 
-    const data = preset.generate(particleCount);
-    engine.initParticles(data);
+    const generated = preset.generate(particleCount);
+    engine.initParticles(generated.data);
+
+    if (generated.spacecraftInit) {
+      const scInit = generated.spacecraftInit;
+      engine.spacecraft.active = true;
+      engine.spacecraft.name = scInit.name || 'ASTRA-1';
+      engine.spacecraft.position = [...scInit.position];
+      engine.spacecraft.velocity = [...scInit.velocity];
+      engine.spacecraft.acceleration = [0, 0, 0];
+      engine.spacecraft.stages = scInit.stages;
+      engine.spacecraft.currentStageIndex = 0;
+      engine.spacecraft.throttle = 0.0;
+      engine.spacecraft.isLaunchPad = !!scInit.isLaunchPad;
+      engine.spacecraft.primaryBodyIndex = scInit.primaryBodyIndex;
+      engine.spacecraft.calculateDeltaV();
+      engine.spacecraft.updateKeplerianElements();
+    } else {
+      engine.spacecraft.active = false;
+    }
+
+    engine.celestialBodies = preset.bodies || [];
+
     renderer.bindEngine(engine);
-
     renderer.camera.setDistance(preset.cameraDistance);
-    renderer.camera.target = [0, 0, 0];
+    renderer.camera.setTarget(0, 0, 0);
     uiController.controlsPanel.render();
   };
 
@@ -120,8 +155,8 @@ async function main(): Promise<void> {
   };
   window.addEventListener('resize', handleResize);
 
-  // Load initial preset (Galaxy Collision)
-  loadPreset(PRESETS[0], 100000);
+  // Load initial preset (Solar System Voyager Slingshot)
+  loadPreset(PRESETS[0], 50000);
 
   // Animation / Render Loop
   let lastTime = performance.now();
@@ -142,7 +177,7 @@ async function main(): Promise<void> {
     renderer.render(engine);
     telemetry.data.renderTimeMs = parseFloat((performance.now() - tRendStart).toFixed(2));
 
-    // 3. Update UI Telemetry HUD
+    // 3. Update UI Telemetry HUD & Spacecraft Flight Deck
     uiController.update();
 
     requestAnimationFrame(frame);

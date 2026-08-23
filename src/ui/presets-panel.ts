@@ -4,8 +4,9 @@ import { PresetConfig } from '../physics/types';
 export class PresetsPanel {
   private container: HTMLElement;
   private onSelectPreset: (preset: PresetConfig, particleCount: number) => void;
-  public selectedCount = 100000;
+  public selectedCount = 50000;
   public currentPresetId = PRESETS[0].id;
+  public activeCategory = 'ALL';
 
   constructor(
     container: HTMLElement,
@@ -17,12 +18,18 @@ export class PresetsPanel {
   }
 
   public render(): void {
-    const particleCounts = [10000, 50000, 100000, 250000, 500000, 1000000];
+    const particleCounts = [10000, 40000, 50000, 100000, 250000, 500000];
+
+    const filteredPresets = this.activeCategory === 'ALL'
+      ? PRESETS
+      : this.activeCategory === 'VEHICLE'
+      ? PRESETS.filter(p => p.hasSpacecraft)
+      : PRESETS.filter(p => !p.hasSpacecraft);
 
     this.container.innerHTML = `
       <div class="panel-section">
         <div class="panel-section-title">
-          <span>PARTICLE DENSITY</span>
+          <span>PARTICLE RESOLUTION</span>
           <span class="badge-count">${(this.selectedCount / 1000).toFixed(0)}k</span>
         </div>
         <div class="count-selector-grid">
@@ -35,16 +42,25 @@ export class PresetsPanel {
       </div>
 
       <div class="panel-section">
+        <div class="preset-category-filter">
+          <button class="filter-btn ${this.activeCategory === 'ALL' ? 'active' : ''}" data-cat="ALL">ALL (10)</button>
+          <button class="filter-btn ${this.activeCategory === 'VEHICLE' ? 'active' : ''}" data-cat="VEHICLE">🚀 SPACEFLIGHT</button>
+          <button class="filter-btn ${this.activeCategory === 'CELESTIAL' ? 'active' : ''}" data-cat="CELESTIAL">🪐 CELESTIAL</button>
+        </div>
+      </div>
+
+      <div class="panel-section">
         <div class="panel-section-title">
-          <span>CELESTIAL SCENARIOS</span>
+          <span>ASTRODYNAMICS SCENARIOS</span>
         </div>
         <div class="presets-list">
-          ${PRESETS.map(preset => `
+          ${filteredPresets.map(preset => `
             <div class="preset-card ${preset.id === this.currentPresetId ? 'active' : ''}" data-preset-id="${preset.id}">
               <div class="preset-card-header">
                 <span class="preset-name">${preset.name}</span>
-                <span class="preset-category">${preset.category}</span>
+                ${preset.hasSpacecraft ? '<span class="preset-spacecraft-badge">🚀 VEHICLE</span>' : ''}
               </div>
+              <div class="preset-category">${preset.category}</div>
               <div class="preset-desc">${preset.description}</div>
               <div class="preset-footer">
                 <span class="preset-tag">θ = ${preset.recommendedTheta}</span>
@@ -64,7 +80,7 @@ export class PresetsPanel {
     const countBtns = this.container.querySelectorAll('.count-btn');
     countBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const count = parseInt(btn.getAttribute('data-count') || '100000', 10);
+        const count = parseInt(btn.getAttribute('data-count') || '50000', 10);
         this.selectedCount = count;
         countBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -74,6 +90,14 @@ export class PresetsPanel {
 
         const preset = PRESETS.find(p => p.id === this.currentPresetId) || PRESETS[0];
         this.onSelectPreset(preset, this.selectedCount);
+      });
+    });
+
+    const filterBtns = this.container.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.activeCategory = btn.getAttribute('data-cat') || 'ALL';
+        this.render();
       });
     });
 

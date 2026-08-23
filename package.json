@@ -1,8 +1,8 @@
 {
-  "name": "gravitas-nbody-sim",
-  "version": "1.0.0",
+  "name": "astrodyne-prime",
+  "version": "2.0.0",
   "private": true,
-  "description": "Production-Grade Barnes-Hut N-Body WebGPU Physics Simulator modeling 500,000+ interacting bodies in real-time.",
+  "description": "ASTRODYNE PRIME: Next-Generation WebGPU Spaceflight, Relativistic Astrodynamics & AI Orbital Physics Lab.",
   "type": "module",
   "scripts": {
     "dev": "vite",

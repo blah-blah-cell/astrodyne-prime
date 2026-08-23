@@ -1,6 +1,7 @@
 import { Camera } from './camera';
 import { GridRenderer } from './grid-renderer';
 import { PostProcessor } from './post-process';
+import { TrajectoryRenderer } from './trajectory-renderer';
 import { ColorPalette, RenderParams } from '../physics/types';
 import { particleRenderShader } from '../shaders/particle-render.wgsl';
 import { NBodyEngine } from '../physics/nbody-engine';
@@ -14,12 +15,13 @@ export class ParticleRenderer {
   public camera: Camera;
   public gridRenderer: GridRenderer;
   public postProcessor: PostProcessor;
+  public trajectoryRenderer: TrajectoryRenderer;
 
   public params: RenderParams;
 
   // Particle Render Pipeline
   private particlePipeline!: GPURenderPipeline;
-  private cameraUniformBuffer!: GPUBuffer;
+  public cameraUniformBuffer!: GPUBuffer;
   private particleBindGroup!: GPUBindGroup;
 
   constructor(
@@ -48,6 +50,7 @@ export class ParticleRenderer {
       canvas.height,
       this.presentationFormat
     );
+    this.trajectoryRenderer = new TrajectoryRenderer(device);
 
     this.createCameraBuffer();
     this.createParticlePipeline();
@@ -118,6 +121,7 @@ export class ParticleRenderer {
       case ColorPalette.GRAVITATIONAL_POTENTIAL: return 3;
       case ColorPalette.PARTICLE_TYPE: return 4;
       case ColorPalette.ELECTRIC_CYAN: return 5;
+      case ColorPalette.SPACEFLIGHT_TELEMETRY: return 0;
       default: return 0;
     }
   }
@@ -144,14 +148,18 @@ export class ParticleRenderer {
   }
 
   public render(engine: NBodyEngine): void {
-    this.camera.update();
+    if (engine.spacecraft) {
+      this.camera.updateWithSpacecraft(engine.spacecraft, this.params.cameraMode);
+    } else {
+      this.camera.update();
+    }
     this.updateCameraUniforms();
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'Particle Render Pass' });
     const currentTexture = this.context.getCurrentTexture();
     const targetView = currentTexture.createView();
 
-    // 1. Render Scene (Grid + Particles) into HDR scene texture
+    // 1. Render Scene (Grid + Particles + Trajectories) into HDR scene texture
     const scenePass = commandEncoder.beginRenderPass({
       colorAttachments: [{
         view: this.postProcessor.sceneTextureView,
@@ -171,6 +179,17 @@ export class ParticleRenderer {
       scenePass.setPipeline(this.particlePipeline);
       scenePass.setBindGroup(0, this.particleBindGroup);
       scenePass.draw(4, engine.count, 0, 0);
+    }
+
+    // Spacecraft Trajectory, Plumes, and Guidance Vectors Pass
+    if (engine.spacecraft && engine.spacecraft.active) {
+      this.trajectoryRenderer.render(
+        scenePass,
+        this.cameraUniformBuffer,
+        engine.spacecraft,
+        this.params.showOrbits,
+        this.params.showGuidanceVectors
+      );
     }
 
     scenePass.end();

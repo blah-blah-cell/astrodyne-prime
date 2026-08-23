@@ -1,5 +1,6 @@
 import {
   AlgorithmType,
+  CelestialBodyInfo,
   IntegratorType,
   ParticleData,
   ParticleType,
@@ -14,11 +15,14 @@ import { integrateShader } from '../shaders/integrate.wgsl';
 import { collisionShader } from '../shaders/collision.wgsl';
 import { telemetryReduceShader } from '../shaders/telemetry-reduce.wgsl';
 import { TelemetryTracker } from './telemetry';
+import { Spacecraft } from './spacecraft';
 
 export class NBodyEngine {
   public device: GPUDevice;
   public params: SimulationParams;
   public telemetry: TelemetryTracker;
+  public spacecraft: Spacecraft = new Spacecraft();
+  public celestialBodies: CelestialBodyInfo[] = [];
 
   public count = 0;
   public pow2Count = 0;
@@ -348,22 +352,78 @@ export class NBodyEngine {
     });
   }
 
+  public calculateGravityAt(x: number, y: number, z: number): [number, number, number] {
+    let ax = 0, ay = 0, az = 0;
+    const G = this.params.gravityConstant;
+    const eps2 = this.params.softening * this.params.softening;
+
+    for (let i = 0; i < this.celestialBodies.length; i++) {
+      const b = this.celestialBodies[i];
+      // Assume body 0 at origin if unindexed
+      const bx = 0;
+      const by = 0;
+      const bz = 0;
+      const dx = bx - x;
+      const dy = by - y;
+      const dz = bz - z;
+      const distSq = dx * dx + dy * dy + dz * dz + eps2;
+      const invDist3 = 1.0 / (distSq * Math.sqrt(distSq));
+      const f = G * b.mass * invDist3;
+      ax += dx * f;
+      ay += dy * f;
+      az += dz * f;
+    }
+
+    if (this.celestialBodies.length === 0) {
+      // Default central mass fallback
+      const dx = -x;
+      const dy = -y;
+      const dz = -z;
+      const distSq = dx * dx + dy * dy + dz * dz + eps2;
+      const invDist3 = 1.0 / (distSq * Math.sqrt(distSq));
+      const f = G * 10000.0 * invDist3;
+      ax += dx * f;
+      ay += dy * f;
+      az += dz * f;
+    }
+
+    return [ax, ay, az];
+  }
+
   public step(): void {
     if (this.params.paused || this.count === 0) {
       return;
     }
 
     const tStart = performance.now();
-    const substeps = this.params.substeps;
-    const subDt = this.params.timeStep / substeps;
+    const timeWarp = Math.max(this.params.timeWarp || 1, 1);
+    
+    // Adaptive substepping to preserve symplectic stability at high time warp
+    let baseSubsteps = this.params.substeps;
+    if (timeWarp > 1) {
+      baseSubsteps = Math.min(Math.max(baseSubsteps * Math.ceil(Math.log2(timeWarp)), baseSubsteps), 16);
+    }
+
+    const totalDt = this.params.timeStep * timeWarp;
+    const subDt = totalDt / baseSubsteps;
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'NBody Physics Step' });
 
-    for (let s = 0; s < substeps; s++) {
+    for (let s = 0; s < baseSubsteps; s++) {
       if (this.params.integrator === IntegratorType.YOSHIDA_4TH) {
         this.stepYoshida(commandEncoder, subDt);
       } else {
         this.stepVelocityVerlet(commandEncoder, subDt);
+      }
+
+      // Step Spacecraft Physics with exact multi-body gravitational acceleration
+      if (this.spacecraft && this.spacecraft.active) {
+        const grav = this.calculateGravityAt(
+          this.spacecraft.position[0],
+          this.spacecraft.position[1],
+          this.spacecraft.position[2]
+        );
+        this.spacecraft.update(subDt, grav, this.celestialBodies);
       }
     }
 
