@@ -19,15 +19,15 @@ From orbital insertion burns and atmospheric Max-Q aerothermodynamics to interst
 
 ---
 
-## 📸 Real Engine Visuals (Captured Directly from WebGPU)
+## 📸 Real Engine Visuals (100% Captured Live from WebGPU & CDP)
 
-| 🚀 White Minimalist Flight Deck & 3D NavBall | 🌌 Galaxy Collision (500,000 Particles) |
+| 🛠️ AXIOM Modular Machine & Rocket Builder | ⚙️ 2026 Frontier AI Model Settings (Gemini 3.7 / Claude Opus 5 / GPT-5.6 / Grok 4.6) |
 |:---:|:---:|
-| <img src="screenshots/astrodyne_white_flight_deck.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_white_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
+| <img src="screenshots/astrodyne_unified_axiom_builder.png" width="100%" alt="AXIOM Modular Builder" /> | <img src="screenshots/e2e_test_ai_settings_active.png" width="100%" alt="ASTRA AI Settings" /> |
 
-| 🤖 ASTRA AI Autonomous Orbital Copilot (BYOK Integration) |
-|:---:|
-| <img src="screenshots/astrodyne_white_astra_copilot.png" width="100%" alt="ASTRA AI Copilot" /> |
+| 🚀 6-DoF Spaceflight Flight Deck & 3D NavBall | 🌌 Relativistic Galaxy Collision (500,000 Particles) |
+|:---:|:---:|
+| <img src="screenshots/e2e_test_spaceflight_active.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_white_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
 
 ---
 
