@@ -2,13 +2,15 @@ import * as THREE from 'three';
 import { PartGraph } from './part-graph.js';
 import { SocketRegistry, WorldSocket } from './socket-registry.js';
 import { PartDefinition, PartInstance } from './types.js';
+import { MultibodySolver } from './multibody-solver.js';
 
 export class BuilderViewport {
   public container: HTMLElement;
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
   public renderer: THREE.WebGLRenderer;
-  private partGraph: PartGraph;
+  public partGraph: PartGraph;
+  public multibodySolver: MultibodySolver;
 
   // Viewport Interaction State
   private raycaster = new THREE.Raycaster();
@@ -26,10 +28,12 @@ export class BuilderViewport {
   private currentSnapTarget: { sourceSocket: any; targetSocket: WorldSocket; transform: any } | null = null;
 
   public isVisible = false;
+  public isKinematicsTestMode = false;
 
   constructor(container: HTMLElement, partGraph: PartGraph) {
     this.container = container;
     this.partGraph = partGraph;
+    this.multibodySolver = new MultibodySolver();
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0a0f1d);
@@ -95,6 +99,36 @@ export class BuilderViewport {
     }
   }
 
+  public async startKinematicsTest(): Promise<void> {
+    if (!this.multibodySolver.isInitialized) {
+      await this.multibodySolver.init();
+    }
+
+    this.multibodySolver.buildSimulationWorld(
+      this.partGraph.assembly,
+      (id) => this.partGraph.getDefinition(id)
+    );
+    this.multibodySolver.start();
+    this.isKinematicsTestMode = true;
+    this.socketMarkersGroup.visible = false;
+    if (this.ghostMesh) this.ghostMesh.visible = false;
+  }
+
+  public stopKinematicsTest(): void {
+    this.multibodySolver.pause();
+    this.multibodySolver.clear();
+    this.isKinematicsTestMode = false;
+    this.socketMarkersGroup.visible = true;
+
+    // Reset part meshes to analytical graph positions
+    for (const [_, inst] of this.partGraph.assembly.parts.entries()) {
+      if (inst.mesh) {
+        inst.mesh.position.set(...inst.position);
+        inst.mesh.quaternion.set(...inst.rotationQuaternion);
+      }
+    }
+  }
+
   public setActivePartDef(def: PartDefinition | null): void {
     this.activePartDef = def;
 
@@ -153,7 +187,7 @@ export class BuilderViewport {
       if (e.button === 2 || e.altKey) {
         this.isMouseDown = true;
         this.prevMousePos = { x: e.clientX, y: e.clientY };
-      } else if (e.button === 0 && this.activePartDef && this.ghostMesh) {
+      } else if (e.button === 0 && this.activePartDef && this.ghostMesh && !this.isKinematicsTestMode) {
         this.placeActivePart();
       }
     });
@@ -172,7 +206,7 @@ export class BuilderViewport {
         this.prevMousePos = { x: e.clientX, y: e.clientY };
       }
 
-      if (this.activePartDef && this.ghostMesh) {
+      if (this.activePartDef && this.ghostMesh && !this.isKinematicsTestMode) {
         this.updateGhostPlacement();
       }
     });
@@ -293,6 +327,9 @@ export class BuilderViewport {
 
   public render(): void {
     if (this.isVisible) {
+      if (this.isKinematicsTestMode) {
+        this.multibodySolver.step(1 / 60);
+      }
       this.renderer.render(this.scene, this.camera);
     }
   }

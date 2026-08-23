@@ -5,6 +5,8 @@ export enum SocketType {
   FLANGE_COUPLER = 'FLANGE_COUPLER',       // Rocket tubes, couplers, decouplers
   HEX_BOLT_MOUNT = 'HEX_BOLT_MOUNT',       // Structural frames, plates, motor mounts
   HINGE_PIVOT = 'HINGE_PIVOT',             // Servos, steering knuckles, control surfaces
+  SLIDER_LINEAR = 'SLIDER_LINEAR',         // Suspension struts, telescopic linear slides
+  BALL_SOCKET = 'BALL_SOCKET',             // Steering tie-rods, suspension wishbones
   SNAP_GRID = 'SNAP_GRID'                  // Modular building blocks, universal frames
 }
 
@@ -44,15 +46,31 @@ export interface PartDefinition {
   dimensions: [number, number, number];
   sockets: AttachmentSocket[];
   createMesh: () => THREE.Object3D;
-  physicsShape: 'BOX' | 'CYLINDER' | 'SPHERE' | 'CONE';
+  physicsShape: 'BOX' | 'CYLINDER' | 'SPHERE' | 'CONE' | 'HULL';
   properties?: {
+    // Mechanical & Actuators
     gearTeeth?: number;
     maxTorqueNm?: number;
+    maxRpm?: number;
+    nominalVoltageV?: number;
+    stallTorqueNm?: number;
+    freeSpeedRpm?: number;
+    motorType?: 'BRUSHED_DC' | 'BLDC' | 'SERVO' | 'STEPPER';
+    
+    // Suspension & Linear Joints
+    springStiffnessNm?: number; // k in N/m
+    springDampingNsm?: number;  // c in Ns/m
+    travelLimitM?: [number, number]; // [minStroke, maxStroke] in meters
+    
+    // Angular Joints
+    jointType?: 'FIXED' | 'REVOLUTE' | 'PRISMATIC' | 'SPHERICAL';
+    jointLimitsDeg?: [number, number]; // [minAngle, maxAngle] in degrees
+    
+    // Aerospace & Aero
     thrustN?: number;
     burnTimeSec?: number;
     propellantMassKg?: number;
     dragCoefficientCd?: number;
-    jointType?: 'FIXED' | 'REVOLUTE' | 'PRISMATIC' | 'SPHERICAL';
   };
 }
 

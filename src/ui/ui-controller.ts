@@ -276,6 +276,17 @@ export class UIController {
     if (this.currentMode === 'BUILDER') {
       this.builderUI.updateTelemetry();
       this.builderViewport.render();
+
+      if (this.builderViewport.isKinematicsTestMode) {
+        let driveThrottle = 0;
+        let driveSteering = 0;
+        if (this.activeKeys.has('KeyW') || this.activeKeys.has('ArrowUp')) driveThrottle += 1.0;
+        if (this.activeKeys.has('KeyS') || this.activeKeys.has('ArrowDown')) driveThrottle -= 1.0;
+        if (this.activeKeys.has('KeyA') || this.activeKeys.has('ArrowLeft')) driveSteering -= 1.0;
+        if (this.activeKeys.has('KeyD') || this.activeKeys.has('ArrowRight')) driveSteering += 1.0;
+
+        this.builderViewport.multibodySolver.applyDriveControls(driveThrottle, driveSteering);
+      }
     }
 
     const sc = this.engine.spacecraft;
