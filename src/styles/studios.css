@@ -1,0 +1,390 @@
+/* ==========================================================================
+   ENGINEERING STUDIOS DESIGN SYSTEM: CAD, OPENROCKET & URDF ROBOTICS
+   ========================================================================== */
+
+/* Universal Studio Layout Containers */
+.studio-fullscreen-container {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 64px);
+  z-index: 20;
+  display: flex;
+  background: var(--bg-dark);
+  overflow: hidden;
+}
+
+.cad-studio-layout,
+.rocketry-studio-layout,
+.robotics-studio-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* --- Left Control Sidebar --- */
+.cad-code-sidebar,
+.rocketry-config-panel,
+.robotics-control-panel {
+  width: 460px;
+  min-width: 420px;
+  height: 100%;
+  background: var(--glass-surface-elevated);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+/* Studio Headers */
+.cad-header,
+.rocketry-header,
+.robotics-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--glass-border-subtle);
+}
+
+.cad-title,
+.rocketry-title,
+.robotics-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.cad-badge,
+.rocketry-badge,
+.robotics-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--accent-blue);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+/* Code Editor in CAD Studio */
+.cad-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 220px;
+}
+
+.cad-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cad-code-area {
+  width: 100%;
+  flex: 1;
+  min-height: 180px;
+  background: #090d16;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  resize: vertical;
+  outline: none;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.cad-code-area:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), inset 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Buttons */
+.btn-cad-run,
+.btn-rocketry-run {
+  padding: 6px 14px;
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+}
+
+.btn-cad-run:hover,
+.btn-rocketry-run:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+}
+
+.btn-cad-export,
+.btn-rocketry-launch {
+  padding: 12px 18px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-cad-export:hover,
+.btn-rocketry-launch:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.btn-cad-import {
+  padding: 12px 18px;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border-subtle);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cad-import:hover {
+  background: rgba(15, 23, 42, 0.12);
+}
+
+.cad-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.cad-actions-row button {
+  flex: 1;
+}
+
+/* Telemetry & Spec Boxes */
+.cad-telemetry-box,
+.robotics-telem-box,
+.aero-diagram-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cad-telem-row,
+.aero-center-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.cad-telem-row b,
+.aero-center-row b {
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+/* Section Cards for OpenRocket */
+.aero-section-card {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aero-card-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.aero-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.aero-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+/* OpenRocket Right Dashboard */
+.rocketry-dashboard-panel {
+  flex: 1;
+  height: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.9));
+}
+
+/* Stability Banner */
+.stability-banner {
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--glass-shadow-lg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stability-banner.optimal {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.9), rgba(16, 185, 129, 0.8));
+  color: #ffffff;
+}
+
+.stability-banner.marginal {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.9), rgba(245, 158, 11, 0.8));
+  color: #ffffff;
+}
+
+.stability-banner.overstable {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(59, 130, 246, 0.8));
+  color: #ffffff;
+}
+
+.stability-banner.unstable {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.9), rgba(244, 63, 94, 0.8));
+  color: #ffffff;
+}
+
+.stability-badge-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+
+.stability-calibers {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.stability-desc {
+  font-size: 0.88rem;
+  line-height: 1.4;
+  opacity: 0.95;
+}
+
+/* Trajectory Metrics Grid */
+.traj-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.traj-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--glass-border-subtle);
+}
+
+.traj-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.traj-val {
+  font-size: 1.15rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* Right 3D Viewport in CAD & Robotics */
+.cad-viewport-wrapper,
+.robotics-viewport-wrapper {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #020617;
+}
+
+.cad-viewport-wrapper canvas,
+.robotics-viewport-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Robotics Joint Slider Group */
+.dh-joint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 380px;
+}
+
+.dh-joint-slider-group {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--glass-border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dh-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.dh-joint-val {
+  font-family: var(--font-mono);
+  color: var(--accent-blue);
+}

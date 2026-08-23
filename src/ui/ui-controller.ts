@@ -10,8 +10,14 @@ import { ParticleRenderer } from '../renderer/renderer.js';
 import { PRESETS } from '../physics/presets.js';
 import { PartGraph } from '../builder/part-graph.js';
 import { PART_CATALOG } from '../builder/catalog.js';
+import { PartCategory, SocketType, SocketGender } from '../builder/types.js';
 import { BuilderViewport } from '../builder/builder-view.js';
 import { BuilderUI } from '../builder/builder-ui.js';
+import { CADStudioView } from '../cad/cad-studio-view.js';
+import { RocketryStudioView } from '../rocketry/rocketry-studio-view.js';
+import { RoboticsStudioView } from '../robotics/robotics-studio-view.js';
+
+export type StudioMode = 'SPACEFLIGHT' | 'BUILDER' | 'CAD' | 'ROCKETRY' | 'ROBOTICS';
 
 export class UIController {
   public telemetryPanel: TelemetryPanel;
@@ -21,11 +27,17 @@ export class UIController {
   public astraDrawer: AstraDrawer;
   public astraCopilot: AstraAICopilot;
 
-  // AXIOM Modular Builder Subsystem
+  // AXIOM Modular Builder
   public partGraph: PartGraph;
   public builderViewport: BuilderViewport;
   public builderUI: BuilderUI;
-  public currentMode: 'SPACEFLIGHT' | 'BUILDER' = 'SPACEFLIGHT';
+
+  // Engineering Studios
+  public cadStudio?: CADStudioView;
+  public rocketryStudio?: RocketryStudioView;
+  public roboticsStudio?: RoboticsStudioView;
+
+  public currentMode: StudioMode = 'SPACEFLIGHT';
 
   private engine: NBodyEngine;
   private renderer: ParticleRenderer;
@@ -72,7 +84,7 @@ export class UIController {
     );
 
     // 4. AXIOM Builder Engine & Viewport
-    this.partGraph = new PartGraph('Custom Modular Rocket');
+    this.partGraph = new PartGraph('Custom Modular Machine');
     this.partGraph.registerDefinitions(PART_CATALOG);
 
     const builderViewportContainer = document.createElement('div');
@@ -99,9 +111,86 @@ export class UIController {
       () => this.handleLaunchCustomMachine()
     );
 
+    // 5. Initialize OpenSCAD CAD Studio Container
+    const cadContainer = document.createElement('div');
+    cadContainer.id = 'cad-studio-container';
+    cadContainer.className = 'studio-fullscreen-container';
+    cadContainer.style.display = 'none';
+    document.body.appendChild(cadContainer);
+
+    this.cadStudio = new CADStudioView(cadContainer, (res) => {
+      // Import custom CAD mesh into AXIOM part graph
+      const customDefId = `cad_part_${Date.now()}`;
+      this.partGraph.registerDefinitions([{
+        id: customDefId,
+        name: 'Custom CAD Solid',
+        category: PartCategory.STRUCTURAL,
+        description: `OpenSCAD generated solid (${(res.volumeMm3 / 1000).toFixed(1)} cm³)`,
+        massKg: Math.max(0.1, (res.volumeMm3 / 1000) * 0.00124),
+        centerOfMass: [0, 0, 0],
+        dimensions: [0.1, 0.1, 0.1],
+        physicsShape: 'BOX',
+        createMesh: () => res.mesh.clone(),
+        sockets: [
+          { id: 'top', name: 'Top Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, 0.1, 0], localNormal: [0, 1, 0] },
+          { id: 'bottom', name: 'Bottom Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, -0.1, 0], localNormal: [0, -1, 0] }
+        ]
+      }]);
+      document.getElementById('btn-nav-builder')?.click();
+    });
+
+    // 6. Initialize OpenRocket Studio Container
+    const rocketryContainer = document.createElement('div');
+    rocketryContainer.id = 'rocketry-studio-container';
+    rocketryContainer.className = 'studio-fullscreen-container';
+    rocketryContainer.style.display = 'none';
+    document.body.appendChild(rocketryContainer);
+
+    this.rocketryStudio = new RocketryStudioView(rocketryContainer, (config, summary) => {
+      // Direct Launch from OpenRocket to Spaceflight
+      const totalMass = summary.stability.totalMassKg;
+      const propMass = config.propellantMassKg;
+      const dryMass = Math.max(0.1, totalMass - propMass);
+
+      const customStage: RocketStage = {
+        id: 1,
+        name: config.name || 'OpenRocket Booster',
+        dryMass,
+        fuelMass: propMass,
+        maxFuelMass: propMass,
+        maxThrust: config.motorThrustN / 100,
+        isp: 290,
+        burnRate: propMass / Math.max(0.1, config.motorBurnTimeSec),
+        ignited: true,
+        separated: false
+      };
+
+      this.engine.spacecraft.active = true;
+      this.engine.spacecraft.name = config.name || 'OpenRocket-1';
+      this.engine.spacecraft.stages = [customStage];
+      this.engine.spacecraft.currentStageIndex = 0;
+      this.engine.spacecraft.position = [0, 10.5, 0];
+      this.engine.spacecraft.velocity = [0, 0, 0];
+      this.engine.spacecraft.throttle = 1.0;
+      this.engine.spacecraft.isLaunchPad = true;
+      this.engine.spacecraft.calculateDeltaV();
+      this.engine.spacecraft.updateKeplerianElements();
+
+      document.getElementById('btn-nav-spaceflight')?.click();
+    });
+
+    // 7. Initialize URDF Robotics Studio Container
+    const roboticsContainer = document.createElement('div');
+    roboticsContainer.id = 'robotics-studio-container';
+    roboticsContainer.className = 'studio-fullscreen-container';
+    roboticsContainer.style.display = 'none';
+    document.body.appendChild(roboticsContainer);
+
+    this.roboticsStudio = new RoboticsStudioView(roboticsContainer);
+
     // Context Bridge for AI Telemetry
     this.astraCopilot.setContextBridge({
-      getCurrentMode: () => this.currentMode,
+      getCurrentMode: () => (this.currentMode === 'BUILDER' ? 'BUILDER' : 'SPACEFLIGHT'),
       getPartGraph: () => this.partGraph
     });
 
@@ -133,30 +222,57 @@ export class UIController {
   private initModeNavigation(): void {
     const btnSpace = document.getElementById('btn-nav-spaceflight');
     const btnBuilder = document.getElementById('btn-nav-builder');
+    const btnCad = document.getElementById('btn-nav-cad');
+    const btnRocketry = document.getElementById('btn-nav-rocketry');
+    const btnRobotics = document.getElementById('btn-nav-robotics');
+
+    const allBtns = [btnSpace, btnBuilder, btnCad, btnRocketry, btnRobotics];
+
     const hudPanel = document.getElementById('hud-left-panel');
     const scHud = document.getElementById('spacecraft-hud');
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
+    const cadCont = document.getElementById('cad-studio-container');
+    const rockCont = document.getElementById('rocketry-studio-container');
+    const robCont = document.getElementById('robotics-studio-container');
 
-    btnSpace?.addEventListener('click', () => {
-      this.currentMode = 'SPACEFLIGHT';
-      btnSpace.classList.add('active');
-      btnBuilder?.classList.remove('active');
+    const switchStudio = (mode: StudioMode, activeBtn: HTMLElement | null) => {
+      this.currentMode = mode;
+      allBtns.forEach(b => b?.classList.remove('active'));
+      activeBtn?.classList.add('active');
 
-      if (hudPanel) hudPanel.style.display = 'flex';
-      if (scHud) scHud.style.display = 'flex';
-      this.builderUI.setVisible(false);
-      this.renderer.params.cameraMode = CameraViewMode.CHASE_SPACECRAFT;
-    });
-
-    btnBuilder?.addEventListener('click', () => {
-      this.currentMode = 'BUILDER';
-      btnBuilder.classList.add('active');
-      btnSpace?.classList.remove('active');
-
+      // Hide all by default
       if (hudPanel) hudPanel.style.display = 'none';
       if (scHud) scHud.style.display = 'none';
-      this.builderUI.setVisible(true);
-      this.builderUI.updateTelemetry();
-    });
+      if (sidebar) sidebar.style.display = 'none';
+      this.builderUI.setVisible(false);
+      if (cadCont) cadCont.style.display = 'none';
+      if (rockCont) rockCont.style.display = 'none';
+      if (robCont) robCont.style.display = 'none';
+
+      if (mode === 'SPACEFLIGHT') {
+        if (hudPanel) hudPanel.style.display = 'flex';
+        if (scHud) scHud.style.display = 'flex';
+        if (sidebar) sidebar.style.display = 'flex';
+        this.renderer.params.cameraMode = CameraViewMode.CHASE_SPACECRAFT;
+      } else if (mode === 'BUILDER') {
+        this.builderUI.setVisible(true);
+        this.builderUI.updateTelemetry();
+      } else if (mode === 'CAD') {
+        if (cadCont) cadCont.style.display = 'flex';
+        this.cadStudio?.resize();
+      } else if (mode === 'ROCKETRY') {
+        if (rockCont) rockCont.style.display = 'flex';
+      } else if (mode === 'ROBOTICS') {
+        if (robCont) robCont.style.display = 'flex';
+        this.roboticsStudio?.resize();
+      }
+    };
+
+    btnSpace?.addEventListener('click', () => switchStudio('SPACEFLIGHT', btnSpace));
+    btnBuilder?.addEventListener('click', () => switchStudio('BUILDER', btnBuilder));
+    btnCad?.addEventListener('click', () => switchStudio('CAD', btnCad));
+    btnRocketry?.addEventListener('click', () => switchStudio('ROCKETRY', btnRocketry));
+    btnRobotics?.addEventListener('click', () => switchStudio('ROBOTICS', btnRobotics));
   }
 
   public handleLaunchCustomMachine(): void {
@@ -230,6 +346,39 @@ export class UIController {
   public handleAIManeuverAction(action: AIManeuverAction): void {
     console.log('[ASTRA AI Action Received]', action);
     const sc = this.engine.spacecraft;
+
+    // 0. OpenSCAD CAD Model Generation
+    if (action.action === 'generate_cad_model') {
+      document.getElementById('btn-nav-cad')?.click();
+      if (action.cadScript && this.cadStudio) {
+        const editor = document.getElementById('cad-code-editor') as HTMLTextAreaElement;
+        if (editor) {
+          editor.value = action.cadScript;
+          this.cadStudio.compileCurrentScript();
+        }
+      }
+    }
+
+    // 0.1 OpenRocket Aerodynamics & Stability Simulation
+    else if (action.action === 'simulate_rocket_aero') {
+      document.getElementById('btn-nav-rocketry')?.click();
+      if (action.rocketConfig && this.rocketryStudio) {
+        this.rocketryStudio.runSimulation();
+        if (action.launchAfterAeroSim) {
+          setTimeout(() => {
+            document.getElementById('btn-launch-aero-sim')?.click();
+          }, 1000);
+        }
+      }
+    }
+
+    // 0.2 URDF Robotics & DH Kinematics Configuration
+    else if (action.action === 'configure_robot_chain') {
+      document.getElementById('btn-nav-robotics')?.click();
+      if (action.dhChain && this.roboticsStudio) {
+        this.roboticsStudio.updateKinematics();
+      }
+    }
 
     // 1. Orbital Maneuvers & Flight Guidance
     if (action.action === 'set_maneuver_node' && sc) {
@@ -377,6 +526,10 @@ export class UIController {
 
         this.builderViewport.multibodySolver.applyDriveControls(driveThrottle, driveSteering);
       }
+    } else if (this.currentMode === 'CAD') {
+      this.cadStudio?.render();
+    } else if (this.currentMode === 'ROBOTICS') {
+      this.roboticsStudio?.render();
     }
 
     const sc = this.engine.spacecraft;

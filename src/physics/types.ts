@@ -279,7 +279,10 @@ export interface AIManeuverAction {
     | 'set_time_warp'
     | 'switch_mode'
     | 'load_scenario'
-    | 'generate_scenario';
+    | 'generate_scenario'
+    | 'generate_cad_model'
+    | 'simulate_rocket_aero'
+    | 'configure_robot_chain';
   
   // Orbital Flight Parameters
   prograde?: number;
@@ -297,8 +300,21 @@ export interface AIManeuverAction {
   clearExisting?: boolean;
   launchAfterBuild?: boolean;
   
+  // OpenSCAD Parametric CAD Parameters
+  cadScript?: string;
+  cadModelName?: string;
+  exportSTL?: boolean;
+  
+  // OpenRocket Aerodynamics Parameters
+  rocketConfig?: any;
+  launchAfterAeroSim?: boolean;
+  
+  // URDF Robotics Parameters
+  dhChain?: any[];
+  exportURDF?: boolean;
+
   // Simulation & Celestial Controls
-  targetMode?: 'SPACEFLIGHT' | 'BUILDER';
+  targetMode?: 'SPACEFLIGHT' | 'BUILDER' | 'CAD' | 'ROCKETRY' | 'ROBOTICS';
   scenarioId?: string;
   scenarioName?: string;
   scenarioCode?: string;

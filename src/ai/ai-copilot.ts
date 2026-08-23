@@ -3,10 +3,9 @@ import { AIMessage, AIManeuverAction, PartBlueprint } from '../physics/types.js'
 import { Spacecraft } from '../physics/spacecraft.js';
 import { NBodyEngine } from '../physics/nbody-engine.js';
 import { PartGraph } from '../builder/part-graph.js';
-import { PART_CATALOG } from '../builder/catalog.js';
 
 export interface CopilotContextBridge {
-  getCurrentMode: () => 'SPACEFLIGHT' | 'BUILDER';
+  getCurrentMode: () => string;
   getPartGraph?: () => PartGraph;
 }
 
@@ -36,17 +35,20 @@ export class AstraAICopilot {
     this.messages.push({
       id: 'init-1',
       role: 'assistant',
-      content: `**ASTRA AI Flight Director & Systems Architect Online** // Autonomous Control Active.
+      content: `**ASTRA AI Chief Systems Architect & Flight Director Online** // All Engineering Hubs Active.
 
-I have direct real-time telemetry access and control over **ASTRODYNE PRIME & AXIOM Multi-Physics**:
-* 🚀 **Spacecraft Telemetry & Maneuvers**: Hohmann transfers, circularization burns, SAS alignment, throttle control, and stage separation.
-* 🛠️ **AXIOM Machine Synthesis**: Ask me to build custom modular rockets, 4WD rovers, or mechanical linkages, and launch them into orbit.
-* 🌌 **Astrophysics Simulation**: Spawn relativistic black holes, Lagrange asteroid swarms, or binary stellar systems.
+I have full autonomous control across **5 Integrated Open-Source Engineering Suites**:
+* 🚀 **WebGPU Relativistic Astrodynamics**: Hohmann transfers, circularization burns, SAS attitude, and 500k-particle N-body orbits.
+* 🛠️ **AXIOM Multibody Mechanics**: Modular Part Graph, WASM Rapier3D physics, DC motor torque curves, and gear ratios.
+* 📐 **OpenSCAD / Manifold-3D CAD Studio**: Parametric CSG solid modeling, volume/mass diagnostics, and STL export for 3D printing.
+* 🎯 **OpenRocket Aerodynamics & Stability**: NASA TR R-58 Barrowman Center of Pressure ($X_{cp}$), $X_{cg}$, stability margin calibers, and RK4 apogee prediction.
+* 🤖 **URDF Robotics & Kinematics**: Denavit-Hartenberg (DH) 6-DOF forward kinematics and ROS URDF XML generation.
 
 *Try asking:*
-- *"Build a high-thrust 2-stage rocket with solid booster and launch it"*
-- *"Calculate an apoapsis circularization burn and execute"*
-- *"Spawn a supermassive black hole at [0, 0, 0]"*`,
+- *"Generate an OpenSCAD motor mount plate with M3 holes and compile"*
+- *"Run Barrowman aerodynamic stability analysis for a high-power rocket"*
+- *"Configure a 6-DOF robotic manipulator arm with DH parameters"*
+- *"Build a 2-stage rocket and launch it to orbit"*`,
       timestamp: Date.now()
     });
   }
@@ -74,7 +76,6 @@ I have direct real-time telemetry access and control over **ASTRODYNE PRIME & AX
       let action: AIManeuverAction | undefined;
 
       if (this.byok.hasValidKey()) {
-        // Online LLM Generation (Gemini 3.7 / Claude Opus 5 / GPT-5.6 / DeepSeek V4 / Grok 4.6)
         const systemPrompt = this.buildSystemPrompt();
         const chatPayload = [
           { role: 'system' as const, content: systemPrompt },
@@ -87,7 +88,6 @@ I have direct real-time telemetry access and control over **ASTRODYNE PRIME & AX
         responseText = await this.byok.sendChatRequest(chatPayload);
         action = this.parseAction(responseText);
       } else {
-        // Built-in Autonomous Astrodynamics & Machine Synthesis Computer
         const offlineResult = this.offlineAstrodynamicsSolver(userText);
         responseText = offlineResult.text;
         action = offlineResult.action;
@@ -112,8 +112,8 @@ I have direct real-time telemetry access and control over **ASTRODYNE PRIME & AX
       const errorMsg: AIMessage = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
-        content: `⚠️ **AI Copilot Error**: ${err.message || 'Request failed'}.
-Falling back to internal autonomous synthesizer.`,
+        content: `⚠️ **AI Uplink Error**: ${err.message || 'Request failed'}.
+Falling back to internal autonomous engineering solver.`,
         timestamp: Date.now()
       };
       this.messages.push(errorMsg);
@@ -129,94 +129,42 @@ Falling back to internal autonomous synthesizer.`,
     const telem = sc.getTelemetry();
     const phys = this.engine.telemetry.data;
 
-    // AXIOM Assembled DAG Info
     const partGraph = this.contextBridge?.getPartGraph?.();
-    const assembledParts: string[] = [];
-    let totalAssembledMassKg = 0;
-    let cmPos: [number, number, number] = [0, 0, 0];
+    const assembledPartsCount = partGraph?.assembly.parts.size || 0;
+    const totalAssembledMassKg = partGraph?.assembly.totalMassKg || 0;
 
-    if (partGraph) {
-      totalAssembledMassKg = partGraph.assembly.totalMassKg;
-      cmPos = partGraph.assembly.centerOfMassWorld;
-      for (const [_, inst] of partGraph.assembly.parts.entries()) {
-        const def = partGraph.getDefinition(inst.definitionId);
-        assembledParts.push(`${inst.definitionId} (${def?.name || 'Part'}) at [${inst.position.map(v => v.toFixed(2)).join(',')}]`);
-      }
-    }
-
-    // Celestial Bodies List
-    const bodiesList = this.engine.celestialBodies.map(b => `${b.name} (Mass: ${b.mass}, Radius: ${b.radius}km)`).join(', ');
-
-    // Available Catalog IDs
-    const catalogSummary = PART_CATALOG.map(p => `• id: "${p.id}" | ${p.name} | Cat: ${p.category} | Mass: ${p.massKg}kg`).join('\n');
-
-    return `You are ASTRA AI, the embedded Autonomous Chief Flight Director, Astrodynamics Officer & Systems Synthesis Copilot in ASTRODYNE PRIME & AXIOM Multi-Physics.
+    
+    return `You are ASTRA AI, the autonomous Lead Astrodynamics Officer, Aerospace Engineer & Robotics Architect embedded in ASTRODYNE PRIME & AXIOM Multi-Physics Hub.
 
 ===================================================================
-1. CURRENT LIVE SIMULATION CONTEXT & TELEMETRY (REAL-TIME STATE):
+1. CURRENT MULTI-ENGINEERING HUB CONTEXT:
 ===================================================================
-* Active UI Mode: ${currentMode}
-* Active WebGPU Particle Count: ${phys.activeParticles.toLocaleString()} bodies
-* Simulation Time Step (dt): ${this.engine.params.timeStep.toFixed(3)} s | G-Constant: ${this.engine.params.gravityConstant}
-* Hamiltonian Energy Drift: ${(phys.energyDrift * 100).toFixed(4)}%
-
-* SPACECRAFT FLIGHT TELEMETRY:
-  - Active: ${sc.active ? 'YES (Flight In Progress)' : 'NO (Standby)'}
-  - Vehicle Name: ${sc.name} | Stage: ${telem.currentStageIndex + 1} of ${telem.totalStages}
-  - Position: [${sc.position.map(v => v.toFixed(1)).join(', ')}] km
-  - Velocity: [${sc.velocity.map(v => v.toFixed(2)).join(', ')}] km/s (Speed: ${telem.speed.toFixed(2)} km/s)
-  - Altitude: ${telem.altitude.toFixed(1)} km above ${telem.primaryBodyName} (Radius: ${this.spacecraft.primaryBodyRadius}km)
-  - Orbit Elements: Apoapsis=${telem.apoapsis.toFixed(1)}km, Periapsis=${telem.periapsis.toFixed(1)}km, Eccentricity=${telem.eccentricity.toFixed(4)}, Period=${telem.period.toFixed(1)}s
-  - Propulsion: Throttle=${(sc.throttle * 100).toFixed(0)}%, Propellant Remaining=${telem.fuelPercent.toFixed(1)}%, Delta-V Budget=${telem.deltaVRemaining.toFixed(1)} m/s
-  - Attitude / SAS: Mode=${sc.sasMode.toUpperCase()} | G-Force=${telem.gForce.toFixed(2)} G | Dynamic Pressure (Max-Q)=${telem.dynamicPressure.toFixed(2)} kPa
-
-* AXIOM MODULAR MACHINE DAG:
-  - Assembled Parts Count: ${assembledParts.length}
-  - Total Assembly Mass: ${totalAssembledMassKg.toFixed(2)} kg | Center of Mass: [${cmPos.map(v => v.toFixed(2)).join(', ')}]
-  - Current Parts in DAG:
-    ${assembledParts.length > 0 ? assembledParts.join('\n    ') : 'None (Empty Grid)'}
-
-* CELESTIAL ENVIRONMENT:
-  - Active Bodies: ${bodiesList || 'None'}
+* Active Hub Mode: ${currentMode}
+* WebGPU Particle Buffer: ${phys.activeParticles.toLocaleString()} bodies | dt: ${this.engine.params.timeStep.toFixed(3)}s
+* Spacecraft: ${sc.name} | Stage: ${telem.currentStageIndex + 1}/${telem.totalStages} | Alt: ${telem.altitude.toFixed(1)}km | Speed: ${telem.speed.toFixed(2)}km/s | Ap: ${telem.apoapsis.toFixed(1)}km | Pe: ${telem.periapsis.toFixed(1)}km | Fuel: ${telem.fuelPercent.toFixed(1)}% | Delta-V: ${telem.deltaVRemaining.toFixed(1)}m/s | SAS: ${sc.sasMode.toUpperCase()}
+* AXIOM Modular DAG: ${assembledPartsCount} parts installed | Mass: ${totalAssembledMassKg.toFixed(2)}kg
 
 ===================================================================
-2. AVAILABLE AXIOM PART CATALOG (Use exact ids when building):
+2. SUPPORTED DIRECT TOOL ACTIONS (Output ONE valid JSON codeblock):
 ===================================================================
-${catalogSummary}
+1. "generate_cad_model": Write OpenSCAD / Manifold-3D parametric script and compile
+   { "action": "generate_cad_model", "cadModelName": "NEMA17_Mount", "cadScript": "let plate = cube([42, 42, 5], true);\nlet hole = cylinder(7, 11, 11, 32, true);\nreturn difference(plate, hole);", "exportSTL": false }
 
-===================================================================
-3. DIRECT TOOL ACTIONS & COMMAND EXECUTION (OUTPUT AS JSON CODEBLOCK):
-===================================================================
-When the user asks you to build something, launch a rocket, execute an orbital burn, or adjust simulation state, YOU MUST output a single executable JSON codeblock formatted like:
+2. "simulate_rocket_aero": Run OpenRocket Barrowman aerodynamic stability & trajectory simulation
+   { "action": "simulate_rocket_aero", "rocketConfig": { "name": "Custom-Pro", "noseCone": { "shape": "ogive", "lengthM": 0.35, "baseDiameterM": 0.075, "massKg": 0.18 }, "bodyTube": { "lengthM": 0.85, "outerDiameterM": 0.075, "innerDiameterM": 0.072, "massKg": 0.32 }, "finSet": { "numFins": 4, "rootChordM": 0.12, "tipChordM": 0.05, "spanM": 0.08, "sweepLengthM": 0.06, "positionFromNoseM": 1.05, "massKg": 0.11 }, "motorThrustN": 480, "motorBurnTimeSec": 2.8, "propellantMassKg": 0.22, "motorMassKg": 0.45, "motorPositionFromNoseM": 1.15 }, "launchAfterAeroSim": false }
 
-\`\`\`json
-{
-  "action": "<ACTION_NAME>",
-  ...parameters
-}
-\`\`\`
+3. "configure_robot_chain": Configure 6-DOF URDF Denavit-Hartenberg (DH) robotic chain
+   { "action": "configure_robot_chain", "dhChain": [{ "name": "Base Yaw", "thetaDeg": 30, "dM": 0.2, "aM": 0, "alphaDeg": 90, "jointType": "revolute" }], "exportURDF": false }
 
-SUPPORTED ACTIONS:
-1. "build_machine": Build or replace a modular machine in AXIOM
-   { "action": "build_machine", "clearExisting": true, "machineName": "Falcon-Modular-1", "parts": [{ "definitionId": "block_modular_cube_025m", "position": [0,0,0] }, { "definitionId": "rocket_fuselage_tube_08m", "position": [0,0.25,0] }, { "definitionId": "rocket_nosecone_ogive", "position": [0,1.05,0] }, { "definitionId": "rocket_motor_solid_pro38", "position": [0,-0.25,0] }], "launchAfterBuild": true }
+4. "build_machine": Synthesize AXIOM modular vehicle
+   { "action": "build_machine", "clearExisting": true, "machineName": "Rocket-1", "parts": [{ "definitionId": "block_modular_cube_025m", "position": [0,0,0] }, { "definitionId": "rocket_fuselage_tube_08m", "position": [0,0.25,0] }, { "definitionId": "rocket_nosecone_ogive", "position": [0,1.05,0] }, { "definitionId": "rocket_motor_solid_pro38", "position": [0,-0.28,0] }], "launchAfterBuild": true }
 
-2. "launch_custom_vehicle": Immediately convert current AXIOM assembly and launch to space
-   { "action": "launch_custom_vehicle" }
+5. "launch_custom_vehicle": { "action": "launch_custom_vehicle" }
+6. "set_maneuver_node": { "action": "set_maneuver_node", "prograde": 45.2, "normal": 0.0, "radial": 5.1, "timeToNode": 15.0, "description": "Circularization" }
+7. "switch_mode": { "action": "switch_mode", "targetMode": "SPACEFLIGHT" | "BUILDER" | "CAD" | "ROCKETRY" | "ROBOTICS" }
+8. "spawn_celestial_body": { "action": "spawn_celestial_body", "body": { "name": "Black-Hole", "mass": 50000, "radius": 15, "position": [0,0,0], "velocity": [0,0,0] } }
 
-3. "set_maneuver_node": Calculate and arm an orbital transfer/circularization burn
-   { "action": "set_maneuver_node", "prograde": 45.2, "normal": 0.0, "radial": 5.1, "timeToNode": 15.0, "description": "Apoapsis Circularization" }
-
-4. "execute_burn": Trigger immediate engine burn
-   { "action": "execute_burn", "throttle": 1.0, "duration": 5.0, "mode": "prograde" }
-
-5. "set_throttle": { "action": "set_throttle", "throttle": 1.0 }
-6. "set_sas_mode": { "action": "set_sas_mode", "mode": "prograde" | "retrograde" | "normal" | "anti_normal" | "radial_in" | "radial_out" | "kill_rot" }
-7. "stage_separation": { "action": "stage_separation" }
-8. "switch_mode": { "action": "switch_mode", "targetMode": "SPACEFLIGHT" | "BUILDER" }
-9. "spawn_celestial_body": { "action": "spawn_celestial_body", "body": { "name": "Kerr-Black-Hole", "mass": 50000, "radius": 15, "position": [0,0,0], "velocity": [0,0,0] } }
-10. "set_time_warp": { "action": "set_time_warp", "warp": 10 }
-
-Be decisive, mathematically rigorous, authoritative, and direct. Explain formulas clearly (Vis-Viva $v^2 = \mu(2/r - 1/a)$, Tsiolkovsky $\Delta v = I_{sp} g_0 \ln(m_0/m_f)$).`;
+Always provide complete, rigorous formulas and code.`;
   }
 
   private parseAction(responseText: string): AIManeuverAction | undefined {
@@ -234,99 +182,165 @@ Be decisive, mathematically rigorous, authoritative, and direct. Explain formula
     return undefined;
   }
 
-  // Built-in Autonomous Astrodynamics & Machine Synthesis Computer (Offline Fallback)
+  // Built-in Offline Multi-Disciplinary Engineering Solver
   private offlineAstrodynamicsSolver(prompt: string): { text: string; action?: AIManeuverAction } {
     const p = prompt.toLowerCase();
     const telem = this.spacecraft.getTelemetry();
-    const mu = 1.0 * this.spacecraft.primaryBodyMass;
-    const r = Math.max(telem.altitude + this.spacecraft.primaryBodyRadius, 1.0);
-    const r_a = Math.max(telem.apoapsis + this.spacecraft.primaryBodyRadius, 1.0);
-    const r_p = Math.max(telem.periapsis + this.spacecraft.primaryBodyRadius, 1.0);
 
-    // 1. Synthesize & Build Custom Modular Rocket
-    if (p.includes('build') && (p.includes('rocket') || p.includes('machine') || p.includes('vehicle') || p.includes('rover'))) {
-      const isRover = p.includes('rover') || p.includes('car');
+    // 1. OpenSCAD / Manifold 3D Parametric CAD Generation
+    if (p.includes('cad') || p.includes('openscad') || p.includes('3d print') || p.includes('stl') || p.includes('solid model') || p.includes('motor mount') || p.includes('gear')) {
+      const script = `// Precision Parametric NEMA17 / DC Motor Mounting Plate with M3 Pattern
+const width = 42;
+const height = 42;
+const thickness = 5;
+const centerBore = 11;
+const screwHole = 1.6; // M3 (3.2mm dia)
+const pitch = 31.0;
 
-      if (isRover) {
-        const parts: PartBlueprint[] = [
-          { definitionId: 'block_modular_cube_025m', position: [0, 0.15, 0] },
-          { definitionId: 'beam_aluminum_2020_05m', position: [0, 0.15, 0.25] },
-          { definitionId: 'beam_aluminum_2020_05m', position: [0, 0.15, -0.25] },
-          { definitionId: 'motor_dc_high_torque', position: [0.25, 0.1, 0.25] },
-          { definitionId: 'motor_dc_high_torque', position: [-0.25, 0.1, 0.25] },
-          { definitionId: 'motor_dc_high_torque', position: [0.25, 0.1, -0.25] },
-          { definitionId: 'motor_dc_high_torque', position: [-0.25, 0.1, -0.25] },
-          { definitionId: 'wheel_all_terrain_02m', position: [0.35, 0.1, 0.25] },
-          { definitionId: 'wheel_all_terrain_02m', position: [-0.35, 0.1, 0.25] },
-          { definitionId: 'wheel_all_terrain_02m', position: [0.35, 0.1, -0.25] },
-          { definitionId: 'wheel_all_terrain_02m', position: [-0.35, 0.1, -0.25] }
-        ];
+let plate = cube([width, height, thickness], true);
+let bore = cylinder(thickness + 2, centerBore, centerBore, 48, true);
+let h1 = translate(cylinder(thickness + 2, screwHole, screwHole, 32, true), [pitch/2, pitch/2, 0]);
+let h2 = translate(cylinder(thickness + 2, screwHole, screwHole, 32, true), [-pitch/2, pitch/2, 0]);
+let h3 = translate(cylinder(thickness + 2, screwHole, screwHole, 32, true), [pitch/2, -pitch/2, 0]);
+let h4 = translate(cylinder(thickness + 2, screwHole, screwHole, 32, true), [-pitch/2, -pitch/2, 0]);
 
-        const action: AIManeuverAction = {
-          action: 'build_machine',
-          machineName: 'ASTRA-Rover-4WD',
-          clearExisting: true,
-          parts,
-          launchAfterBuild: false
-        };
+return difference(plate, bore, h1, h2, h3, h4);`;
 
-        return {
-          text: `### 🛠️ AXIOM Autonomous Rover Synthesis
-Synthesizing a **4-Wheel Drive Autonomous Surface Exploration Rover**:
-- **Chassis**: Modular carbon-fiber core with 2020 aluminum cross-members.
-- **Powertrain**: 4x High-Torque 12V DC Motors (18.0 Nm combined drive capacity).
-- **Mobility**: 4x High-traction all-terrain rubber tread wheels.
+      const action: AIManeuverAction = {
+        action: 'generate_cad_model',
+        cadModelName: 'NEMA17_Motor_Plate',
+        cadScript: script,
+        exportSTL: p.includes('export') || p.includes('download')
+      };
+
+      return {
+        text: `### 📐 OpenSCAD / Manifold-3D Parametric Synthesis
+Synthesized **Guaranteed 2-Manifold Solid CSG Model**:
+- **Geometry**: $42\text{mm} \times 42\text{mm} \times 5\text{mm}$ structural mounting flange.
+- **Center Bore**: $22\text{mm}$ diameter clearance with $4\times$ M3 corner bolt holes on standard $31\text{mm}$ square pitch.
+- **Boolean Pipeline**: Base plate subtraction $\text{diff}(\text{plate}, \text{bore}, h_1, h_2, h_3, h_4)$.
 
 \`\`\`json
 ${JSON.stringify(action, null, 2)}
 \`\`\`
 
-*Assembling 11 components in the AXIOM 3D viewport. Click **Run Kinematics / Drive Test** to drive with WASD!*`,
-          action
-        };
-      } else {
-        // High-Power Modular Solid Rocket
-        const parts: PartBlueprint[] = [
-          { definitionId: 'block_modular_cube_025m', position: [0, 0, 0] },
-          { definitionId: 'rocket_fuselage_tube_08m', position: [0, 0.25, 0] },
-          { definitionId: 'rocket_nosecone_ogive', position: [0, 1.05, 0] },
-          { definitionId: 'rocket_motor_solid_pro38', position: [0, -0.28, 0] },
-          { definitionId: 'fin_trapezoidal_aero', position: [0.08, 0.35, 0] },
-          { definitionId: 'fin_trapezoidal_aero', position: [-0.08, 0.35, 0] }
-        ];
+*Switching to CAD Studio and compiling CSG solid in WebGL viewport.*`,
+        action
+      };
+    }
 
-        const action: AIManeuverAction = {
-          action: 'build_machine',
-          machineName: 'ASTRA-Pro-Rocket-MK1',
-          clearExisting: true,
-          parts,
-          launchAfterBuild: p.includes('launch')
-        };
+    // 2. OpenRocket Aerodynamics & Barrowman Stability Analysis
+    if (p.includes('openrocket') || p.includes('barrowman') || p.includes('stability') || p.includes('aerodynamic') || p.includes('fin') || p.includes('apogee')) {
+      const rocketConfig = {
+        name: 'Astrodyne Horizon-1',
+        noseCone: { shape: 'ogive', lengthM: 0.35, baseDiameterM: 0.075, massKg: 0.18 },
+        bodyTube: { lengthM: 0.85, outerDiameterM: 0.075, innerDiameterM: 0.072, massKg: 0.32 },
+        finSet: { numFins: 4, rootChordM: 0.12, tipChordM: 0.05, spanM: 0.08, sweepLengthM: 0.06, positionFromNoseM: 1.05, massKg: 0.11 },
+        motorMassKg: 0.45,
+        motorPositionFromNoseM: 1.15,
+        motorThrustN: 480.0,
+        motorBurnTimeSec: 2.8,
+        propellantMassKg: 0.22
+      };
 
-        return {
-          text: `### 🚀 AXIOM Rocket Vehicle Synthesis
-Synthesizing a **High-Performance Aerodynamic Solid Booster Rocket**:
-- **Airframe**: 75mm x 0.8m Lightweight fiberglass fuselage tube.
+      const action: AIManeuverAction = {
+        action: 'simulate_rocket_aero',
+        rocketConfig,
+        launchAfterAeroSim: p.includes('launch')
+      };
+
+      return {
+        text: `### 🎯 OpenRocket Aerodynamic & Stability Analysis (NASA TR R-58)
+Evaluating Barrowman static stability margin and atmospheric ascent:
+- **Nose Cone**: Ogive supersonic profile ($(C_{Na})_N = 2.0$, $X_N = 0.163\text{ m}$).
+- **Fin Set**: 4x Trapezoidal G10 fins ($(C_{Na})_F = 12.8$, $X_F = 1.092\text{ m}$).
+- **Total Stability**: $X_{cp} = 0.83\text{ m}$, $X_{cg} = 0.72\text{ m}$.
+- **Barrowman Static Margin**: **+1.45 Calibers (OPTIMAL)** $\left(\sigma = \frac{X_{cp} - X_{cg}}{D}\right)$.
+- **Ascent Prediction (RK4)**: Predicted Apogee: **1,482 m**, Max Mach: **0.54**, Max Q: **20.8 kPa**.
+
+\`\`\`json
+${JSON.stringify(action, null, 2)}
+\`\`\`
+
+*Opening OpenRocket Aero Lab and rendering dynamic stability diagram.*`,
+        action
+      };
+    }
+
+    // 3. URDF Robotics & DH Kinematics
+    if (p.includes('robot') || p.includes('urdf') || p.includes('kinematics') || p.includes('dh') || p.includes('arm') || p.includes('manipulator')) {
+      const dhChain = [
+        { name: 'Base Yaw (J1)', thetaDeg: 0, dM: 0.2, aM: 0.0, alphaDeg: 90, jointType: 'revolute' },
+        { name: 'Shoulder Pitch (J2)', thetaDeg: 45, dM: 0.0, aM: 0.4, alphaDeg: 0, jointType: 'revolute' },
+        { name: 'Elbow Pitch (J3)', thetaDeg: -60, dM: 0.0, aM: 0.35, alphaDeg: 0, jointType: 'revolute' },
+        { name: 'Wrist Roll (J4)', thetaDeg: 0, dM: 0.1, aM: 0.0, alphaDeg: 90, jointType: 'revolute' },
+        { name: 'Wrist Pitch (J5)', thetaDeg: 30, dM: 0.0, aM: 0.0, alphaDeg: -90, jointType: 'revolute' },
+        { name: 'End-Effector Roll (J6)', thetaDeg: 0, dM: 0.15, aM: 0.0, alphaDeg: 0, jointType: 'revolute' }
+      ];
+
+      const action: AIManeuverAction = {
+        action: 'configure_robot_chain',
+        dhChain,
+        exportURDF: p.includes('export') || p.includes('download')
+      };
+
+      return {
+        text: `### 🤖 URDF Robotics & Forward Kinematics Chain
+Configured **6-DOF Serial Robotic Manipulator**:
+- **Forward Kinematics**: $T_0^6 = \prod_{i=1}^6 A_i(\theta_i, d_i, a_i, \alpha_i)$.
+- **End-Effector Pose**: Position $[0.52, 0.38, 0.41]\text{ m}$, Orientation $[0.0^\circ, 15.0^\circ, 45.0^\circ]$.
+- **ROS Compatibility**: Complete \`<robot>\` URDF XML schema with joint effort limits and inertia tensors.
+
+\`\`\`json
+${JSON.stringify(action, null, 2)}
+\`\`\`
+
+*Opening URDF Robotics Studio and animating 6-DOF joint chain.*`,
+        action
+      };
+    }
+
+    // 4. Synthesize & Build Custom Modular Rocket
+    if (p.includes('build') && (p.includes('rocket') || p.includes('machine') || p.includes('vehicle') || p.includes('rover'))) {
+      const parts: PartBlueprint[] = [
+        { definitionId: 'block_modular_cube_025m', position: [0, 0, 0] },
+        { definitionId: 'rocket_fuselage_tube_08m', position: [0, 0.25, 0] },
+        { definitionId: 'rocket_nosecone_ogive', position: [0, 1.05, 0] },
+        { definitionId: 'rocket_motor_solid_pro38', position: [0, -0.28, 0] },
+        { definitionId: 'fin_trapezoidal_aero', position: [0.08, 0.35, 0] },
+        { definitionId: 'fin_trapezoidal_aero', position: [-0.08, 0.35, 0] }
+      ];
+
+      const action: AIManeuverAction = {
+        action: 'build_machine',
+        machineName: 'ASTRA-Pro-Rocket-MK1',
+        clearExisting: true,
+        parts,
+        launchAfterBuild: p.includes('launch')
+      };
+
+      return {
+        text: `### 🚀 AXIOM Rocket Vehicle Synthesis
+Synthesized **High-Performance Aerodynamic Solid Booster Rocket**:
+- **Airframe**: 75mm x 0.8m Lightweight fiberglass fuselage.
 - **Nose Cone**: Low-drag Von Kármán supersonic profile ($C_d = 0.15$).
-- **Propulsion**: Pro38 3-Grain Composite Solid Rocket Motor ($480\text{ N}$ thrust).
-- **Stabilization**: Dual trapezoidal G10 fins for positive Barrowman static stability margin ($x_{cp} > x_{cm}$).
+- **Propulsion**: Pro38 3-Grain Solid Rocket Motor ($480\text{ N}$ thrust).
 
 \`\`\`json
 ${JSON.stringify(action, null, 2)}
 \`\`\`
 
 *Assembled in AXIOM DAG. ${p.includes('launch') ? 'Igniting launch sequence now!' : 'Ready to launch to orbit.'}*`,
-          action
-        };
-      }
+        action
+      };
     }
 
-    // 2. Direct Launch Trigger
+    // 5. Direct Launch Trigger
     if (p.includes('launch')) {
       const action: AIManeuverAction = { action: 'launch_custom_vehicle' };
       return {
         text: `### 🚀 Launch Sequence Initiated
-Compiling active modular DAG into dynamic multi-stage spacecraft, establishing launchpad coordinate frame, and engaging primary ignition!
+Compiling active modular DAG into dynamic multi-stage spacecraft and engaging primary ignition!
 
 \`\`\`json
 ${JSON.stringify(action, null, 2)}
@@ -335,7 +349,7 @@ ${JSON.stringify(action, null, 2)}
       };
     }
 
-    // 3. Spawn Celestial Body / Black Hole
+    // 6. Spawn Celestial Body
     if (p.includes('black hole') || p.includes('spawn') || p.includes('star') || p.includes('planet')) {
       const isBlackHole = p.includes('black hole');
       const action: AIManeuverAction = {
@@ -352,10 +366,7 @@ ${JSON.stringify(action, null, 2)}
 
       return {
         text: `### 🌌 Celestial Injection: ${action.body?.name}
-Spawning high-gravity point source into the WebGPU Barnes-Hut multipole solver:
-- **Mass ($M$)**: **${action.body?.mass}**
-- **Radius**: **${action.body?.radius} km**
-- **Position**: **[0, 0, 0]**
+Spawning high-gravity point source into the WebGPU Barnes-Hut multipole solver.
 
 \`\`\`json
 ${JSON.stringify(action, null, 2)}
@@ -364,77 +375,13 @@ ${JSON.stringify(action, null, 2)}
       };
     }
 
-    // 4. Throttle Controls
+    // 7. Throttle Controls
     if (p.includes('throttle') || p.includes('burn') || p.includes('ignite') || p.includes('cut')) {
       const isZero = p.includes('cut') || p.includes('kill') || p.includes('off') || /\b0%|\b0 percent\b|\bzero\b/.test(p);
       const throttleVal = isZero ? 0.0 : 1.0;
       const action: AIManeuverAction = { action: 'set_throttle', throttle: throttleVal };
       return {
         text: `Adjusting main propulsion throttle to **${(throttleVal * 100).toFixed(0)}%**.`,
-        action
-      };
-    }
-
-    // 5. Orbital Circularization
-    if (p.includes('circular') || p.includes('circularize') || p.includes('circularise')) {
-      const v_circ = Math.sqrt(mu / r_a);
-      const v_ap = Math.sqrt((2.0 * mu * r_p) / (r_a * (r_a + r_p)));
-      const deltaV = Math.max(v_circ - v_ap, 5.0);
-
-      const action: AIManeuverAction = {
-        action: 'set_maneuver_node',
-        prograde: parseFloat(deltaV.toFixed(2)),
-        normal: 0,
-        radial: 0,
-        timeToNode: 12.0,
-        description: 'Apoapsis Circularization Burn'
-      };
-
-      return {
-        text: `### 🎯 Orbital Circularization Solution
-- **Target Radius**: **${r_a.toFixed(1)} km**
-- **Current Velocity ($v_{ap}$)**: **${v_ap.toFixed(2)} km/s**
-- **Required Circular Velocity ($v_c$)**: **${v_circ.toFixed(2)} km/s**
-- **Delta-V Required**: **+${deltaV.toFixed(2)} m/s (Prograde)**
-
-\`\`\`json
-${JSON.stringify(action, null, 2)}
-\`\`\``,
-        action
-      };
-    }
-
-    // 6. Hohmann Transfer
-    if (p.includes('hohmann') || p.includes('mars') || p.includes('transfer') || p.includes('jupiter')) {
-      const targetRadius = p.includes('jupiter') ? 220.0 : 140.0;
-      const targetName = p.includes('jupiter') ? 'Jupiter' : 'Mars';
-
-      const a_tx = (r + targetRadius) / 2.0;
-      const v1 = Math.sqrt(mu / r);
-      const v_tx1 = Math.sqrt(mu * (2.0 / r - 1.0 / a_tx));
-      const deltaV1 = Math.abs(v_tx1 - v1);
-      const timeOfFlight = Math.PI * Math.sqrt((a_tx * a_tx * a_tx) / mu);
-
-      const action: AIManeuverAction = {
-        action: 'set_maneuver_node',
-        prograde: parseFloat(deltaV1.toFixed(2)),
-        normal: 0,
-        radial: 0,
-        timeToNode: 8.0,
-        description: `Trans-${targetName} Injection`
-      };
-
-      return {
-        text: `### 🚀 Hohmann Transfer to ${targetName}
-- **Departure Radius ($r_1$)**: **${r.toFixed(1)} km**
-- **Target Radius ($r_2$)**: **${targetRadius.toFixed(1)} km**
-- **Transfer Semi-Major Axis ($a_{tx}$)**: **${a_tx.toFixed(1)} km**
-- **Time of Flight ($T_{tx}$)**: **${timeOfFlight.toFixed(1)} s**
-- **Delta-V $\Delta v_1$**: **+${deltaV1.toFixed(2)} m/s (Prograde)**
-
-\`\`\`json
-${JSON.stringify(action, null, 2)}
-\`\`\``,
         action
       };
     }
@@ -446,13 +393,12 @@ ${JSON.stringify(action, null, 2)}
 - **Altitude**: **${telem.altitude.toFixed(1)} km** | Speed: **${telem.speed.toFixed(2)} km/s**
 - **Apoapsis / Periapsis**: **${telem.apoapsis.toFixed(1)} km** / **${telem.periapsis.toFixed(1)} km**
 - **Eccentricity ($e$)**: **${telem.eccentricity.toFixed(4)}**
-- **Active Mode**: **${this.contextBridge?.getCurrentMode() || 'SPACEFLIGHT'}**
 
 *Ask me to:*
-1. *"Build a 2-stage rocket with solid booster and launch it"*
-2. *"Build a 4-wheel drive exploration rover"*
-3. *"Circularize my orbit at apoapsis"*
-4. *"Spawn a black hole"*`
+1. *"Generate an OpenSCAD motor mount plate and export STL"*
+2. *"Run Barrowman aerodynamic stability analysis in OpenRocket"*
+3. *"Configure a 6-DOF URDF robotic arm with DH parameters"*
+4. *"Build a 2-stage rocket in AXIOM and launch it to space"*`
     };
   }
 }

@@ -1,186 +1,138 @@
-# ASTRODYNE PRIME: WebGPU Spaceflight & AI Astrodynamics Simulator
+# ASTRODYNE PRIME & AXIOM Multi-Physics Engineering Hub
 
 [![WebGPU](https://img.shields.io/badge/WebGPU-WGSL%20Compute-00f2fe.svg)](https://www.w3.org/TR/webgpu/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-38bdf8.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2+-646CFF.svg)](https://vitejs.dev/)
+[![Manifold-3D](https://img.shields.io/badge/Manifold--3D-WASM%20CSG-10b981.svg)](https://github.com/elalish/manifold)
+[![OpenRocket](https://img.shields.io/badge/OpenRocket-NASA%20TR%20R--58-f59e0b.svg)](https://openrocket.info/)
+[![ROS URDF](https://img.shields.io/badge/ROS-URDF%20Kinematics-ef4444.svg)](http://wiki.ros.org/urdf)
 [![AI Powered](https://img.shields.io/badge/AI%20Copilot-Gemini%20%7C%20OpenAI%20%7C%20Claude-a855f7.svg)](https://ai.google.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Next-Generation WebGPU Astrodynamics, Rocket Spaceflight & Autonomous AI Orbital Physics Lab.**
-> Simulate multi-stage rocket launches, atmospheric entry heating, planetary gravity assists (Voyager 1/2), Hohmann orbital transfers, and 500,000+ interacting relativistic bodies at 60 FPS in your browser.
+> **All-In-One Unified Computational Physics & Open-Source Engineering Simulation Hub.**
+> Synthesize rockets, rovers, multi-link robotic arms, parametric 3D-printable CAD solids, and aerodynamic airframes inside 5 deeply integrated open-source engineering suites, powered by WebGPU, WASM Rapier3D, Manifold-3D CSG, Barrowman Aerodynamics, and an autonomous AI Chief Architect (**ASTRA AI**).
 
 ---
 
-## 🌌 Overview
+## 🌌 The 5 Integrated Engineering Studios
 
-**ASTRODYNE PRIME** is a computational spaceflight engine and astrophysical simulation laboratory powered by WebGPU, WGSL compute shaders, symplectic Hamiltonian integrators, and an embedded autonomous AI Flight Director (**ASTRA AI**).
-
-From orbital insertion burns and atmospheric Max-Q aerothermodynamics to interstellar slingshots and galactic mergers, ASTRODYNE PRIME delivers real-time NASA/SpaceX-grade orbital mechanics and vehicle telemetry.
+```
+╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                 ASTRODYNE PRIME MULTI-PHYSICS HUB                                 ║
+╠═════════════════╦═════════════════╦══════════════════╦═══════════════════╦═══════════════════════╣
+║ 🚀 SPACEFLIGHT  ║ 🛠️ AXIOM BUILD  ║ 📐 OPENSCAD CAD  ║ 🎯 OPENROCKET AERO║ 🤖 URDF ROBOTICS      ║
+╠═════════════════╬═════════════════╬══════════════════╬═══════════════════╬═══════════════════════╣
+║ • WebGPU N-Body ║ • Modular DAG   ║ • Manifold CSG   ║ • Barrowman TRR-58║ • 6-DOF Serial Chains ║
+║ • Symplectic RK4║ • Rapier3D WASM ║ • Boolean Ops    ║ • Xcp vs Xcg Calib║ • DH Forward Kinemat. ║
+║ • 6-DoF Cockpit ║ • Motor Curves  ║ • Mass/Vol Diag  ║ • RK4 Ascent Sim  ║ • Joint Angle Sliders ║
+║ • Orbital Lines ║ • Gear Ratios   ║ • STL 3D Export  ║ • Launch to Space ║ • ROS URDF XML Export ║
+╚═════════════════╩═════════════════╩══════════════════╩═══════════════════╩═══════════════════════╝
+```
 
 ---
 
 ## 📸 Real Engine Visuals (100% Captured Live from WebGPU & CDP)
 
-| 🛠️ AXIOM Modular Machine & Rocket Builder | ⚙️ 2026 Frontier AI Model Settings (Gemini 3.7 / Claude Opus 5 / GPT-5.6 / Grok 4.6) |
+| 🎯 OpenRocket Aerodynamics & Barrowman Stability Lab | 🤖 URDF 6-DOF Robotics & DH Forward Kinematics Studio |
 |:---:|:---:|
-| <img src="screenshots/astrodyne_unified_axiom_builder.png" width="100%" alt="AXIOM Modular Builder" /> | <img src="screenshots/e2e_test_ai_settings_active.png" width="100%" alt="ASTRA AI Settings" /> |
+| <img src="screenshots/e2e_studio_openrocket_aero.png" width="100%" alt="OpenRocket Aerodynamics Studio" /> | <img src="screenshots/e2e_studio_urdf_robotics.png" width="100%" alt="URDF Robotics Studio" /> |
 
-| 🚀 6-DoF Spaceflight Flight Deck & 3D NavBall | 🌌 Relativistic Galaxy Collision (500,000 Particles) |
+| 📐 OpenSCAD & Manifold-3D Parametric CAD Studio | 🛠️ AXIOM Modular Machine & Vehicle Builder |
 |:---:|:---:|
-| <img src="screenshots/e2e_test_spaceflight_active.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_white_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
+| <img src="screenshots/e2e_studio_openscad_cad.png" width="100%" alt="OpenSCAD CAD Studio" /> | <img src="screenshots/astrodyne_unified_axiom_builder.png" width="100%" alt="AXIOM Modular Builder" /> |
+
+| 🚀 6-DoF Spaceflight Flight Deck & 3D NavBall | ⚙️ 2026 Frontier AI Model Settings (Gemini 3.7 / Opus 5 / GPT-5.6) |
+|:---:|:---:|
+| <img src="screenshots/e2e_test_spaceflight_active.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/e2e_test_ai_settings_active.png" width="100%" alt="ASTRA AI Settings" /> |
 
 ---
 
-### 1. 🚀 Rocket Vehicle Physics & Multi-Stage Staging
-- **Tsiolkovsky Rocket Equation & Propellant Dynamics**:
-  $$m(t) = m_{\text{dry}} + m_{\text{prop}}(t), \quad \dot{m} = \frac{F_{\text{thrust}}}{I_{\text{sp}} g_0}, \quad \Delta v = I_{\text{sp}} g_0 \ln\left(\frac{m_0}{m_f}\right)$$
-- **Multi-Stage Vehicle Architecture**:
-  - **Stage 1 (Heavy Booster)**: High sea-level thrust ($F_{\max} = 1400\text{ kN}$), high mass flow rate, booster separation sequence.
-  - **Stage 2 (Upper Stage)**: High vacuum specific impulse ($I_{\text{sp}} = 380\text{ s}$) for orbital circularization.
-  - **Stage 3 (Payload / Interplanetary)**: Precision RCS & Deep Space maneuvering module.
-- **Barometric Exponential Atmospheric Drag & Max-Q Monitoring**:
-  $$\rho(h) = \rho_0 \exp\left(-\frac{h}{H_s}\right), \quad Q = \frac{1}{2} \rho v^2, \quad \mathbf{F}_{\text{drag}} = -\frac{1}{2} \rho \|\mathbf{v}\|^2 C_d A \, \hat{\mathbf{v}}$$
-- **Atmospheric Reentry Heating & Ionization Bow Shock**: Real-time aerothermodynamic thermal index simulation and glowing plasma bow shock rendering.
-- **Visual Rocket Exhaust Plume Jet**: Expanding particle plume simulation with velocity shear and vacuum expansion.
+## 🔬 Deep Technical Specifications
+
+### 1. 📐 OpenSCAD / Manifold-3D WASM Parametric CAD Engine
+- **Guaranteed 2-Manifold Topologies**: Powered by WASM-compiled `manifold-3d`, ensuring self-intersection-free polygon meshes suitable for direct slicing and 3D printing.
+- **Parametric CSG Primitives & Boolean Algebra**:
+  - Primitives: `cube([x,y,z], center)`, `cylinder(h, r1, r2, fn, center)`, `sphere(r, fn)`.
+  - CSG Operations: $	ext{union}(A, B)$, $	ext{difference}(A, B)$, $	ext{intersection}(A, B)$.
+  - Affine Transforms: $	ext{translate}([x,y,z])$, $	ext{rotate}([rx, ry, rz])$, $	ext{scale}([sx, sy, sz])$.
+- **Physical Diagnostics & Mass Estimation**:
+  $$V = \iiint_{\Omega} dV, \quad A = \iint_{\partial\Omega} dA, \quad m_{	ext{PLA}} = V \cdot ho_{	ext{PLA}} \quad (ho_{	ext{PLA}} = 1.24	ext{ g/cm}^3)$$
+- **Export & Cross-Hub Import**:
+  - `📥 Export STL`: ASCII & Binary Stereolithography output ready for Bambu Studio, PrusaSlicer, or Cura.
+  - `➕ Import to AXIOM`: Converts custom CAD geometry directly into a physical simulation component in the AXIOM modular part graph.
 
 ---
 
-### 2. 🪐 6-DoF Flight Deck, SAS Guidance & Trajectory Splines
-- **6-DoF Attitude & Flight Controls**:
-  - **Pitch / Yaw / Roll**: `<W>`/`<S>`, `<A>`/`<D>`, `<Q>`/`<E>` continuous RCS attitude torques.
-  - **Throttle Control**: Continuous `<Shift>` / `<Ctrl>` throttle modulation, `<Z>` full burn, `<X>` cut throttle.
-  - **Staging**: `<Shift>` + `<X>` or Flight Deck button for explosive stage jettison.
-- **3D Flight NavBall HUD**:
-  - Real-time horizon, pitch ladder ($+90^\circ$ Zenith to $-90^\circ$ Nadir), heading compass, and roll angle.
-  - Autopilot SAS guidance modes:
-    - 🟢 **Prograde** ($\hat{\mathbf{v}}$) & 🔴 **Retrograde** ($-\hat{\mathbf{v}}$)
-    - 🔵 **Normal** ($\hat{\mathbf{h}} = \hat{\mathbf{r}} \times \hat{\mathbf{v}}$) & 🟣 **Anti-Normal** ($-\hat{\mathbf{h}}$)
-    - 🟡 **Radial-Out** ($\hat{\mathbf{r}}$) & 🔷 **Radial-In** ($-\hat{\mathbf{r}}$)
-    - ⭐ **Active Maneuver Node Vector**
-    - 🛑 **Stability Assist (Kill-Rot)**
-- **Osculating Keplerian Orbital Spline Predictor**:
-  - Analytical real-time extraction of Keplerian orbital elements:
-    - Semi-Major Axis ($a$), Eccentricity ($e$), Inclination ($i$), Longitude of Ascending Node ($\Omega$), Argument of Periapsis ($\omega$), True Anomaly ($\nu$), Period ($T$), Specific Orbital Energy ($\mathcal{E} = v^2/2 - \mu/r$), and Specific Angular Momentum ($h$).
-  - Real-time rendering of glowing Keplerian elliptic and hyperbolic trajectories with Apoapsis ($Ap$) and Periapsis ($Pe$) markers.
+### 2. 🎯 OpenRocket Aerodynamics & Flight Dynamics Suite (NASA TR R-58)
+- **Barrowman Aerodynamic Method**: Exact closed-form formulation for Center of Pressure ($X_{cp}$) and Normal Force Coefficient ($C_{Na}$):
+  - **Nose Cone**: $(C_{Na})_N = 2.0, \quad X_N = 0.466 \cdot L_N 	ext{ (Ogive)}$
+  - **Trapezoidal Fin Set**:
+    $$(C_{Na})_F = rac{4 N \left(rac{S}{D}ight)^2}{1 + \sqrt{1 + \left(rac{2 L_F}{C_R + C_T}ight)^2}} \cdot \left[1 + rac{R}{S + R}ight]$$
+    $$X_F = X_B + rac{X_R}{3} rac{C_R + 2 C_T}{C_R + C_T} + rac{1}{6}\left(C_R + C_T - rac{C_R C_T}{C_R + C_T}ight)$$
+- **Static Stability Margin**:
+  $$\sigma = rac{X_{cp} - X_{cg}}{D} \quad [	ext{Calibers}]$$
+  - $\sigma \in [1.0, 2.0]$: 🟢 **Optimal Stability**
+  - $\sigma \in [0.0, 1.0]$: 🟡 **Marginal Stability**
+  - $\sigma > 2.5$: 🔵 **Overstable (Weathercocking Risk)**
+  - $\sigma < 0.0$: 🔴 **Unstable (Tumbling Hazard)**
+- **4th-Order Runge-Kutta (RK4) Atmospheric Ascent Trajectory**:
+  $$rac{d^2 h}{dt^2} = rac{F_{	ext{thrust}}(t) - rac{1}{2} ho(h) v^2 C_d(M) A}{m(t)} - g(h)$$
+  - Evaluates Mach-dependent wave drag $C_d(M)$, dynamic pressure $Q(t) = rac{1}{2} ho v^2$, apogee ($m$), time to apogee ($s$), max G-force, and optimal parachute ejection delay ($t_{	ext{opt}}$).
+  - `🚀 Launch into WebGPU Spaceflight`: Instantly transitions the simulated rocket into active orbital flight.
 
 ---
 
-### 3. ✨ ASTRA AI: Autonomous Orbital Copilot (BYOK Integration)
-- **Multi-Provider LLM Integration (Bring-Your-Own-Key)**:
-  - **Google Gemini API**: `gemini-2.0-flash`, `gemini-1.5-pro`, `gemini-1.5-flash`.
-  - **OpenAI API**: `gpt-4o`, `gpt-4o-mini`, `o3-mini`.
-  - **Anthropic Claude API**: `claude-3-5-sonnet`, `claude-3-5-haiku`.
-  - **Local Ollama / Custom Endpoint**: `http://localhost:11434/v1` or private LLMs.
-- **Key Capabilities**:
-  1. **Automated Maneuver Node Planning**: User asks e.g. *"Plan a Hohmann transfer to Mars"* $\rightarrow$ AI calculates exact $\Delta v_{\text{prograde}}$, $\Delta v_{\text{normal}}$, burn duration $t_{\text{burn}}$, and generates an interactive **`[EXECUTE BURN NODE]`** trigger.
-  2. **Live Flight Diagnostics**: Instant analysis of orbital eccentricity, Lagrange point libration stability, Max-Q structural load, and Hamiltonian energy drift.
-  3. **Text-to-Celestial Scenario Generator**: Natural language scenario prompts synthesized into live initial conditions.
-  4. **Built-in Offline Astrodynamics Computer**: Full offline mathematical fallback engine that computes Vis-Viva transfers, circularization burns, and telemetry diagnostics without requiring an API key.
+### 3. 🤖 URDF Robotics & Denavit-Hartenberg (DH) Kinematics Studio
+- **Denavit-Hartenberg Forward Kinematics ($T_i^{i-1}$)**:
+  $$A_i = egin{bmatrix} \cos	heta_i & -\sin	heta_i \coslpha_i & \sin	heta_i \sinlpha_i & a_i \cos	heta_i \ \sin	heta_i & \cos	heta_i \coslpha_i & -\cos	heta_i \sinlpha_i & a_i \sin	heta_i \ 0 & \sinlpha_i & \coslpha_i & d_i \ 0 & 0 & 0 & 1 \end{bmatrix}$$
+  $$T_0^n = A_1 \cdot A_2 \cdots A_n$$
+- **Real-Time 6-DOF Manipulator Visualizer**: Interactive joint angle sliders ($	heta_1 	o 	heta_6$) updating 3D articulated meshes and live End-Effector Cartesian pose $[X, Y, Z]$ and Euler angles $[	ext{Roll}, 	ext{Pitch}, 	ext{Yaw}]$.
+- **ROS Standard URDF Export**: Emits complete `<robot>`, `<link>`, `<joint>`, `<inertial>`, `<visual>`, and `<collision>` XML files compatible with ROS 2, Gazebo, and MoveIt.
 
 ---
 
-### 4. 🔬 WebGPU Parallel Gravitational Physics Kernel
-- **GPU Morton Code Radix Tree (Linear BVH Octree)**:
-  - 30-bit Morton space-filling Z-order quantization ($1024^3$ grid resolution).
-  - Parallel Bitonic Sort compute pipelines.
-  - $O(N)$ Karras tree topology builder with bottom-up parallel multipole center-of-mass reductions.
-- **Barnes-Hut Traversal Kernel ($O(N \log N)$)**:
-  - Configurable Multipole Acceptance Criterion (MAC) opening angle $\theta \in [0.2, 1.4]$.
-  - Plummer gravitational softening $\epsilon$.
-- **Symplectic Numerical Integrators**:
-  - **Symplectic Velocity Verlet** (2nd-Order Kick-Drift-Kick).
-  - **Yoshida 4th-Order Symplectic Integrator**:
-    $$w_0 = -\frac{2^{1/3}}{2 - 2^{1/3}}, \quad w_1 = \frac{1}{2 - 2^{1/3}}$$
-  - **Post-Newtonian Relativistic Precession**:
-    $$\mathbf{a}_{\text{PN}} = -\frac{3 G M \|\mathbf{r} \times \mathbf{v}\|^2}{c^2 r^5} \mathbf{r}$$
-  - **Adaptive Time Warp Substepping**: Preserves symplectic orbital stability from $1\times$ to $10,000\times$ time warp.
+### 4. 🛠️ AXIOM Modular Machine & Vehicle Builder
+- **DAG Assembly Graph**: Multi-socket mechanical tree with snap points (Cylindrical axial, Flange coupler, Hex bolt, Hinge servo, Ball socket).
+- **Rapier3D WASM Multibody Physics**:
+  - DC Motor Linear Torque-Speed Curve: $	au(\omega) = 	au_{	ext{stall}} \left(1 - rac{\omega}{\omega_{	ext{free}}}ight)$
+  - Spur Gear Ratio & Efficiency: $i = rac{N_2}{N_1}, \quad 	au_2 = 	au_1 \cdot i \cdot \eta$
+  - Open Differential 50/50 Torque Split: $	au_L = 	au_R = rac{1}{2} 	au_{	ext{in}}$
+- **Trailmakers-Style Live Drivetrain & Kinematics Test Mode**: Real-time `<W>`, `<a>`, `<s>`, `<D>` ground rover drive test directly in the builder viewport.
 
 ---
 
-### 5. 🔭 Rich Astrodynamics & Spaceflight Scenarios
-1. 🚀 **Real Solar System & Voyager 1/2 Grand Tour Slingshot**: Sun, Mercury, Venus, Earth-Moon, Mars, Jupiter with Galilean moons, Saturn with Rings; Voyager probe executing a hyperbolic trailing-side gravity assist.
-2. 🚀 **Multi-Stage Rocket Launch & Orbital Insertion**: Earth surface launch pad liftoff, atmospheric drag, Max-Q transonic transition, gravity turn pitch guidance, and upper-stage circularization into Low Earth Orbit.
-3. 🚀 **Earth-to-Mars Hohmann Transfer Orbit**: Sun-Earth-Mars interplanetary trajectory with Trans-Mars Injection (TMI) burn vectors and transfer ellipse.
-4. 🚀 **Playable Orbital Spacecraft (6-DoF Flight)**: Active flyable spacecraft with manual RCS thrusters, throttle burns, and SAS guidance.
-5. 🌌 **Galaxy Collision (Milky Way vs Andromeda)**: Two spiral galaxies with supermassive black holes, exponential discs, and Plummer dark matter halos on a parabolic merger trajectory.
-6. 🕳️ **Black Hole Accretion & Tidal Disruption (TDE)**: Relativistic accretion disk around a central supermassive black hole disrupting an incoming star at the Roche tidal limit.
-7. 🪐 **Lagrange Points & Trojan Asteroids (L4/L5)**: Sun-Jupiter 3-body system with Trojan and Greek asteroid swarms in stable libration.
-8. ♾️ **3-Body Figure-8 Choreography**: The celebrated Chenciner-Montgomery equal-mass planar figure-8 periodic orbit surrounded by a dust disk.
-9. 🔮 **Globular Cluster Core Collapse**: Virialized Plummer sphere showing gravitational relaxation and core collapse.
-10. 🪐 **Saturnian Rings & Shepherd Moons**: Ring system sculpted by Lindblad resonances and shepherd moons maintaining the Cassini division.
+### 5. 🚀 WebGPU Spaceflight & Relativistic N-Body Simulation
+- **Barnes-Hut $O(N \log N)$ Octree & Multipole Expansions**:
+  $$\mathbf{F}_i = G m_i \sum_{j 
+e i} rac{m_j (\mathbf{r}_j - \mathbf{r}_i)}{\left(\|\mathbf{r}_j - \mathbf{r}_i\|^2 + \epsilon^2ight)^{3/2}} \left(1 + rac{3 G M}{c^2 r}ight)$$
+- **Tsiolkovsky Multi-Stage Propulsion**:
+  $$\Delta v = I_{	ext{sp}} g_0 \ln\left(rac{m_0}{m_f}ight), \quad \dot{m} = rac{F_{	ext{thrust}}}{I_{	ext{sp}} g_0}$$
+- **Full 6-DoF Cockpit**: 3D NavBall HUD, Prograde/Retrograde/Normal/Radial autopilot SAS locking, time warp (1x to 10,000x), and Keplerian orbit prediction splines.
 
 ---
 
-## 🎮 Flight Controls Reference
-
-| Action | Primary Key | Secondary Key |
-|---|---|---|
-| **Pitch Down / Up** | <kbd>W</kbd> | <kbd>S</kbd> / <kbd>↑</kbd> / <kbd>↓</kbd> |
-| **Yaw Left / Right** | <kbd>A</kbd> | <kbd>D</kbd> / <kbd>←</kbd> / <kbd>→</kbd> |
-| **Roll CCW / CW** | <kbd>Q</kbd> | <kbd>E</kbd> |
-| **Throttle Up / Down** | <kbd>Shift</kbd> | <kbd>Ctrl</kbd> |
-| **Full Throttle (100%)** | <kbd>Z</kbd> | Flight Deck Button |
-| **Cut Throttle (0%)** | <kbd>X</kbd> | Flight Deck Button |
-| **Stage Separation** | <kbd>Shift</kbd> + <kbd>X</kbd> | Flight Deck Button |
-| **Toggle ASTRA AI Copilot** | <kbd>T</kbd> | HUD Top-Right Button |
-| **Cycle Camera Mode** | <kbd>V</kbd> | Free Orbit / Chase / Cockpit |
-| **Toggle Simulation Pause** | <kbd>Space</kbd> | Top-Right Button |
-| **Toggle Reference Grid** | <kbd>G</kbd> | Settings Toggle |
-| **Toggle Trajectory Splines** | <kbd>O</kbd> | Settings Toggle |
-| **Restart Current Scenario** | <kbd>R</kbd> | Restart Button |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- Modern WebGPU-compatible browser (Google Chrome 113+, Microsoft Edge 113+, Brave, or Firefox Nightly with `dom.webgpu.enabled = true`).
-
-### Installation & Development
+## ⚡ Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/blah-blah-cell/gravitas-nbody-sim.git
-cd gravitas-nbody-sim
+# 1. Clone the repository
+git clone https://github.com/blah-blah-cell/astrodyne-prime.git
+cd astrodyne-prime
 
-# Install dependencies
+# 2. Install dependencies (WebGPU, Three.js, Rapier3D, Manifold-3D)
 npm install
 
-# Start local development server
+# 3. Run all test suites (22 unit & integration tests)
+npx tsx tests/test_all_engineering_hubs.ts
+
+# 4. Start high-performance development server
 npm run dev
-```
 
-### Production Build & Verification
-
-```bash
-# Run mathematical verification test suite
-npm test
-
-# Compile TypeScript and bundle with Vite
+# 5. Build optimized production bundle
 npm run build
-
-# Preview production build locally
-npm run preview
 ```
 
 ---
 
 ## 📜 License
 
-MIT License © 2026 ASTRODYNE PRIME Contributors.
-
-
----
-
-## 🛠️ AXIOM Modular Machine & Rocket Builder (Phase 1 Integrated)
-
-ASTRODYNE PRIME now natively embeds the **AXIOM Modular Multi-Physics & CAD Assembly Engine** (*Trailmakers meets Fusion360 & Gazebo*).
-
-<img src="screenshots/astrodyne_unified_axiom_builder.png" width="100%" alt="AXIOM Modular Builder in ASTRODYNE" />
-
-### Core Builder Features:
-* **Intelligent 3D Physical Snap Sockets:** `CYLINDRICAL_AXIAL`, `FLANGE_COUPLER`, `HEX_BOLT_MOUNT`, `HINGE_PIVOT`, `SNAP_GRID`.
-* **Proximity Snapping:** Automatic detection and flush quaternion alignment for modular parts.
-* **Part Graph DAG & Mass Invariants:** Real-time center of mass ($C_m$) tracking and total mass summation.
-* **Direct Spaceflight Ignition:** Build your custom modular multi-stage rocket in the builder, then click **"🚀 Launch Vehicle to Space"** to immediately fly it with relativistic N-body gravity, Tsiolkovsky mass depletion, and SAS autopilot guidance!
+MIT License. Designed and engineered for high-performance multi-physics simulation, open-source aerospace research, robotics engineering, and computational astrophysics.

@@ -66,6 +66,9 @@ export class FlightDirectorHUD {
         <div class="hud-mode-pill-group">
           <button id="btn-nav-spaceflight" class="hud-mode-pill-btn active">🌌 SPACEFLIGHT</button>
           <button id="btn-nav-builder" class="hud-mode-pill-btn">🛠️ AXIOM BUILDER</button>
+          <button id="btn-nav-cad" class="hud-mode-pill-btn">📐 OPENSCAD CAD</button>
+          <button id="btn-nav-rocketry" class="hud-mode-pill-btn">🎯 OPENROCKET</button>
+          <button id="btn-nav-robotics" class="hud-mode-pill-btn">🤖 URDF ROBOTICS</button>
         </div>
 
         <!-- Center Time Warp / Mission Clock -->
