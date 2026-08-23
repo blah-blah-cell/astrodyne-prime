@@ -19,7 +19,17 @@ From orbital insertion burns and atmospheric Max-Q aerothermodynamics to interst
 
 ---
 
-## ⚡ Core Technical Features
+## 📸 Real Engine Visuals (Captured Directly from WebGPU)
+
+| 🚀 Flight Deck HUD & 3D NavBall | 🌌 Galaxy Collision (500,000 Particles) |
+|:---:|:---:|
+| <img src="screenshots/astrodyne_flight_deck.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
+
+| 🕳️ Relativistic Black Hole Accretion & Tidal Disruption Event (TDE) |
+|:---:|
+| <img src="screenshots/astrodyne_black_hole_tde.png" width="100%" alt="Black Hole TDE" /> |
+
+---
 
 ### 1. 🚀 Rocket Vehicle Physics & Multi-Stage Staging
 - **Tsiolkovsky Rocket Equation & Propellant Dynamics**:
