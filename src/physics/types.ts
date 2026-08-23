@@ -250,7 +250,7 @@ export interface PresetConfig {
   };
 }
 
-export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'deepseek' | 'ollama';
+export type AIProvider = 'gemini' | 'openai' | 'anthropic' | 'deepseek' | 'xai' | 'ollama';
 
 export interface AIConfig {
   provider: AIProvider;

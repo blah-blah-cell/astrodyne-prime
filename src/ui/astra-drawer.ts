@@ -103,6 +103,10 @@ export class AstraDrawer {
                   <span class="provider-icon">🐋</span>
                   <span class="provider-name">DeepSeek</span>
                 </button>
+                <button type="button" class="provider-pill" data-provider="xai">
+                  <span class="provider-icon">⚡</span>
+                  <span class="provider-name">xAI Grok</span>
+                </button>
                 <button type="button" class="provider-pill" data-provider="ollama">
                   <span class="provider-icon">🦙</span>
                   <span class="provider-name">Local Ollama</span>
@@ -317,6 +321,9 @@ export class AstraDrawer {
       } else if (provider === 'deepseek') {
         getKeyLink.href = 'https://platform.deepseek.com/api_keys';
         getKeyLink.textContent = 'Get DeepSeek Key ↗';
+      } else if (provider === 'xai') {
+        getKeyLink.href = 'https://console.x.ai/';
+        getKeyLink.textContent = 'Get xAI Key ↗';
       }
     }
 

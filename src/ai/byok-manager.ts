@@ -1,41 +1,50 @@
 import { AIConfig } from '../physics/types.js';
 
-const STORAGE_KEY = 'ASTRODYNE_AI_CONFIG_V2';
+const STORAGE_KEY = 'ASTRODYNE_AI_CONFIG_V3';
 
 export interface ModelOption {
   id: string;
   name: string;
-  badge: 'REASONING' | 'FLAGSHIP' | 'FAST' | 'HYBRID THINKING' | 'LOCAL';
+  badge: 'FRONTIER' | 'REASONING' | 'FLAGSHIP' | 'FAST' | 'HYBRID THINKING' | 'LOCAL';
   description: string;
 }
 
 export const PROVIDER_MODELS: Record<string, ModelOption[]> = {
   gemini: [
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', badge: 'REASONING', description: 'State-of-the-art multimodal reasoning & astrodynamics math' },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', badge: 'FAST', description: 'Ultra-fast 1M token context window & real-time telemetry analysis' },
-    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', badge: 'FAST', description: 'Low latency real-time flight copilot & burn planner' },
-    { id: 'gemini-2.0-pro-exp-02-05', name: 'Gemini 2.0 Pro Experimental', badge: 'FLAGSHIP', description: 'Frontier orbital mechanics & complex celestial choreography' },
-    { id: 'gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking', badge: 'REASONING', description: 'Dedicated Chain-of-Thought mathematical physics solver' }
+    { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', badge: 'FRONTIER', description: 'Google frontier model for coding, agentic reasoning & real-time telemetry' },
+    { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro', badge: 'FLAGSHIP', description: 'Frontier deep multimodal reasoning & complex astrodynamics proofs' },
+    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', badge: 'FAST', description: 'High-throughput low-latency orbital trajectory solver' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', badge: 'REASONING', description: 'Proven high-precision numerical physics reasoning' },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', badge: 'FAST', description: '1M token context window for full mission logs & telemetry' }
   ],
   openai: [
-    { id: 'o3-mini', name: 'o3-mini (High STEM)', badge: 'REASONING', description: 'Frontier STEM & numerical physics reasoning model' },
-    { id: 'o1', name: 'o1 (Full Reasoning)', badge: 'REASONING', description: 'Deep orbital mechanics derivation and multi-body analysis' },
-    { id: 'gpt-4.5-preview', name: 'GPT-4.5 Preview', badge: 'FLAGSHIP', description: 'Next-generation massive knowledge flagship' },
-    { id: 'gpt-4o', name: 'GPT-4o (Omni)', badge: 'FLAGSHIP', description: 'Flagship multimodal vision & astrodynamics synthesis' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', badge: 'FAST', description: 'Lightweight & cost-efficient flight director' }
+    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', badge: 'FRONTIER', description: 'OpenAI frontier flagship for high-end reasoning, coding & space dynamics' },
+    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', badge: 'FLAGSHIP', description: 'Balanced high intelligence & rapid response flight director' },
+    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', badge: 'FAST', description: 'Ultra-fast cost-efficient real-time telemetry analyzer' },
+    { id: 'o4-mini', name: 'o4-mini', badge: 'REASONING', description: 'Next-gen step-by-step mathematical reasoning & physics solver' },
+    { id: 'o3-pro', name: 'o3-pro', badge: 'REASONING', description: 'Deep thinking mathematical orbital mechanics derivation' },
+    { id: 'gpt-4o', name: 'GPT-4o (Omni)', badge: 'FLAGSHIP', description: 'Proven multimodal flight copilot' }
   ],
   anthropic: [
-    { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: 'HYBRID THINKING', description: 'Hybrid standard / extended thinking for mission planning' },
-    { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', badge: 'FLAGSHIP', description: 'Industry benchmark for precise astrodynamics code' },
-    { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: 'FAST', description: 'Sub-second trajectory vector solver' }
+    { id: 'claude-opus-5', name: 'Claude Opus 5', badge: 'FRONTIER', description: 'Anthropic flagship: thoughtful proactive agentic planning & deep analysis' },
+    { id: 'claude-fable-5', name: 'Claude Fable 5', badge: 'REASONING', description: 'Optimized for long-running autonomous missions & trajectory simulations' },
+    { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', badge: 'FLAGSHIP', description: 'Mid-tier standard balancing speed and advanced astrodynamics precision' },
+    { id: 'claude-haiku-4.5', name: 'Claude Haiku 4.5', badge: 'FAST', description: 'Sub-second real-time maneuver node calculator' }
   ],
   deepseek: [
-    { id: 'deepseek-reasoner', name: 'DeepSeek-R1 (Reasoner)', badge: 'REASONING', description: 'Open-weights frontier reasoning & mathematical physics proofs' },
-    { id: 'deepseek-chat', name: 'DeepSeek-V3', badge: 'FLAGSHIP', description: 'Fast multi-stage vehicle burn & orbit calculations' }
+    { id: 'deepseek-v4-pro', name: 'DeepSeek-V4 Pro', badge: 'FRONTIER', description: 'Flagship deep reasoning with native thinking mode for physics proofs' },
+    { id: 'deepseek-v4-flash', name: 'DeepSeek-V4 Flash', badge: 'FAST', description: 'Ultra-fast low latency orbital burn calculator' },
+    { id: 'deepseek-chat', name: 'DeepSeek-V3.2 (Chat)', badge: 'FLAGSHIP', description: 'Standard general-purpose spaceflight assistant' },
+    { id: 'deepseek-reasoner', name: 'DeepSeek-R1 (Reasoner)', badge: 'REASONING', description: 'Open-weights Chain-of-Thought mathematical solver' }
+  ],
+  xai: [
+    { id: 'grok-4.6', name: 'Grok 4.6', badge: 'FRONTIER', description: 'xAI frontier flagship: 500K context & deep mathematical physics' },
+    { id: 'grok-4.5', name: 'Grok 4.5', badge: 'FLAGSHIP', description: 'High capability coding & autonomous spacecraft guidance' },
+    { id: 'grok-4.1-fast', name: 'Grok 4.1 Fast', badge: 'FAST', description: 'High throughput, low latency real-time telemetry processing' }
   ],
   ollama: [
     { id: 'deepseek-r1:14b', name: 'DeepSeek-R1 14B (Local)', badge: 'LOCAL', description: 'Local offline deep reasoning model via Ollama' },
-    { id: 'llama3.3:70b', name: 'Llama 3.3 70B (Local)', badge: 'LOCAL', description: 'High capability open-weights model' },
+    { id: 'llama3.3:70b', name: 'Llama 3.3 70B (Local)', badge: 'LOCAL', description: 'Local open-weights flagship' },
     { id: 'qwen2.5-coder:32b', name: 'Qwen 2.5 Coder 32B (Local)', badge: 'LOCAL', description: 'Local precision math & trajectory generation' }
   ]
 };
@@ -51,7 +60,7 @@ export class BYOKManager {
     const defaultConf: AIConfig = {
       provider: 'gemini',
       apiKey: '',
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.7-flash',
       baseUrl: '',
       temperature: 0.3
     };
@@ -94,7 +103,7 @@ export class BYOKManager {
   public hasValidKey(): boolean {
     return (
       (this.config.provider === 'ollama' && !!this.config.baseUrl) ||
-      (this.config.apiKey !== '' && this.config.apiKey.length > 6)
+      (this.config.apiKey !== '' && this.config.apiKey.length > 5)
     );
   }
 
@@ -145,7 +154,7 @@ export class BYOKManager {
   public async sendChatRequest(messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>): Promise<string> {
     const { provider, apiKey, model, baseUrl, temperature } = this.config;
 
-    // 1. Google Gemini API
+    // 1. Google Gemini API (Official v1beta Endpoint)
     if (provider === 'gemini') {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       
@@ -185,14 +194,16 @@ export class BYOKManager {
       return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     }
 
-    // 2. OpenAI / DeepSeek API
-    if (provider === 'openai' || provider === 'deepseek') {
-      const isDeepSeek = provider === 'deepseek';
-      const endpoint = isDeepSeek 
-        ? 'https://api.deepseek.com/chat/completions'
-        : 'https://api.openai.com/v1/chat/completions';
+    // 2. OpenAI / DeepSeek / xAI API (Standard Chat Completions)
+    if (provider === 'openai' || provider === 'deepseek' || (provider as any) === 'xai') {
+      let endpoint = 'https://api.openai.com/v1/chat/completions';
+      if (provider === 'deepseek') {
+        endpoint = 'https://api.deepseek.com/chat/completions';
+      } else if ((provider as any) === 'xai') {
+        endpoint = 'https://api.x.ai/v1/chat/completions';
+      }
 
-      const isReasoning = model.startsWith('o1') || model.startsWith('o3') || model.includes('reasoner');
+      const isReasoning = model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4') || model.includes('reasoner') || model.includes('v4-pro');
 
       const body: any = {
         model,
@@ -221,7 +232,7 @@ export class BYOKManager {
       return data.choices?.[0]?.message?.content || '';
     }
 
-    // 3. Anthropic Claude API
+    // 3. Anthropic Claude API (Official Messages Endpoint)
     if (provider === 'anthropic') {
       const url = 'https://api.anthropic.com/v1/messages';
       const systemPrompt = messages.find(m => m.role === 'system')?.content || '';
@@ -241,8 +252,7 @@ export class BYOKManager {
           model,
           system: systemPrompt,
           messages: userAndAssistantMsgs,
-          max_tokens: 2048,
-          temperature: temperature ?? 0.3
+          max_tokens: 2048
         })
       });
 
