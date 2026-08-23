@@ -1,5 +1,6 @@
-import { AstraAICopilot } from '../ai/ai-copilot';
-import { AIManeuverAction } from '../physics/types';
+import { AstraAICopilot } from '../ai/ai-copilot.js';
+import { PROVIDER_MODELS } from '../ai/byok-manager.js';
+import { AIManeuverAction } from '../physics/types.js';
 
 export class AstraDrawer {
   private container: HTMLElement;
@@ -7,7 +8,6 @@ export class AstraDrawer {
   private onExecuteManeuver: (action: AIManeuverAction) => void;
 
   public isOpen = false;
-  private isSettingsOpen = false;
 
   private chatMessagesEl!: HTMLElement;
   private inputEl!: HTMLInputElement;
@@ -40,7 +40,7 @@ export class AstraDrawer {
             </div>
           </div>
           <div class="drawer-actions">
-            <button id="btn-ai-settings" class="btn-icon-header" title="BYOK API Settings">⚙️</button>
+            <button id="btn-ai-settings" class="btn-icon-header" title="AI Provider & Model Settings">⚙️</button>
             <button id="btn-close-drawer" class="btn-icon-header" title="Close Drawer">✕</button>
           </div>
         </div>
@@ -59,7 +59,7 @@ export class AstraDrawer {
         <!-- Chat Input Bar -->
         <div class="drawer-input-bar">
           <input type="text" id="astra-input" placeholder="Ask ASTRA AI to plan a burn or analyze telemetry..." autocomplete="off">
-          <button id="btn-send-ai" class="btn-send-msg">
+          <button id="btn-send-ai" class="btn-send-msg" title="Send message">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -68,59 +68,92 @@ export class AstraDrawer {
         </div>
       </aside>
 
-      <!-- BYOK Settings Modal -->
+      <!-- Luxury Glassmorphic BYOK Settings Modal -->
       <div id="ai-settings-modal" class="ai-modal-overlay" style="display: none;">
         <div class="ai-modal-card glass-panel">
           <div class="modal-header">
-            <div class="modal-title">AI Engine & BYOK Configuration</div>
+            <div class="modal-title-group">
+              <div class="modal-title-icon">⚙️</div>
+              <div>
+                <div class="modal-title">AI Engine & Model Configuration</div>
+                <div class="modal-subtitle">Configure frontier reasoning LLMs & Bring-Your-Own-Key</div>
+              </div>
+            </div>
             <button id="btn-close-settings" class="btn-close-modal">✕</button>
           </div>
 
           <div class="modal-body">
+            <!-- Provider Segmented Tabs -->
             <div class="form-group">
-              <label class="form-label">AI Provider</label>
-              <select id="select-ai-provider" class="form-select">
-                <option value="gemini">Google Gemini API (Recommended)</option>
-                <option value="openai">OpenAI API</option>
-                <option value="anthropic">Anthropic Claude API</option>
-                <option value="ollama">Local Ollama / Custom Endpoint</option>
-              </select>
+              <label class="form-label">Select AI Provider</label>
+              <div class="provider-pill-grid">
+                <button type="button" class="provider-pill active" data-provider="gemini">
+                  <span class="provider-icon">♊</span>
+                  <span class="provider-name">Google Gemini</span>
+                </button>
+                <button type="button" class="provider-pill" data-provider="openai">
+                  <span class="provider-icon">✳️</span>
+                  <span class="provider-name">OpenAI</span>
+                </button>
+                <button type="button" class="provider-pill" data-provider="anthropic">
+                  <span class="provider-icon">🪸</span>
+                  <span class="provider-name">Anthropic</span>
+                </button>
+                <button type="button" class="provider-pill" data-provider="deepseek">
+                  <span class="provider-icon">🐋</span>
+                  <span class="provider-name">DeepSeek</span>
+                </button>
+                <button type="button" class="provider-pill" data-provider="ollama">
+                  <span class="provider-icon">🦙</span>
+                  <span class="provider-name">Local Ollama</span>
+                </button>
+              </div>
             </div>
 
+            <!-- Model Selection Dropdown with Badges -->
             <div class="form-group">
               <label class="form-label">Model Selection</label>
-              <select id="select-ai-model" class="form-select">
-                <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-              </select>
+              <select id="select-ai-model" class="form-select"></select>
+              <div id="model-desc-hint" class="model-desc-hint"></div>
             </div>
 
+            <!-- API Key Input with Visibility Toggle -->
             <div class="form-group" id="group-api-key">
-              <label class="form-label">API Key</label>
+              <div class="label-row-with-link">
+                <label class="form-label">API Key</label>
+                <a id="link-get-api-key" href="https://aistudio.google.com/app/apikey" target="_blank" class="link-get-key">Get Key ↗</a>
+              </div>
               <div class="key-input-wrapper">
                 <input type="password" id="input-ai-key" class="form-input" placeholder="Paste your API key here...">
-                <button type="button" id="btn-toggle-key-vis" class="btn-toggle-vis">👁️</button>
+                <button type="button" id="btn-toggle-key-vis" class="btn-toggle-vis" title="Show/Hide Key">👁️</button>
               </div>
-              <div class="form-hint">Stored locally in encrypted browser localStorage. Never sent to third parties.</div>
+              <div class="form-hint">
+                <span>🔒 Stored strictly in local encrypted browser memory. Never shared.</span>
+              </div>
             </div>
 
+            <!-- Local Endpoint Base URL (for Ollama) -->
             <div class="form-group" id="group-base-url" style="display: none;">
-              <label class="form-label">Base URL (Ollama / Local Proxy)</label>
+              <label class="form-label">Ollama / Custom API Base URL</label>
               <input type="text" id="input-ai-url" class="form-input" placeholder="http://localhost:11434">
             </div>
 
+            <!-- Temperature Slider -->
             <div class="form-group">
-              <label class="form-label">Temperature: <span id="val-ai-temp">0.4</span></label>
-              <input type="range" id="range-ai-temp" min="0.0" max="1.0" step="0.05" value="0.4">
+              <div class="label-row-with-link">
+                <label class="form-label">Temperature: <span id="val-ai-temp" class="badge-value">0.30</span></label>
+                <span class="temp-role-hint" id="temp-role-hint">Deterministic Physics</span>
+              </div>
+              <input type="range" id="range-ai-temp" min="0.0" max="1.0" step="0.05" value="0.30" class="form-range">
             </div>
 
+            <!-- Live Test Status Badge -->
             <div id="test-key-status" class="test-key-result" style="display: none;"></div>
           </div>
 
           <div class="modal-footer">
-            <button id="btn-test-ai-key" class="btn-secondary">Test Connection</button>
-            <button id="btn-save-ai-settings" class="btn-primary">Save Configuration</button>
+            <button id="btn-test-ai-key" class="btn-modal-secondary">⚡ Test Connection</button>
+            <button id="btn-save-ai-settings" class="btn-modal-primary">Save Configuration</button>
           </div>
         </div>
       </div>
@@ -132,6 +165,7 @@ export class AstraDrawer {
     this.settingsModalEl = this.container.querySelector('#ai-settings-modal')!;
 
     this.attachEvents();
+    this.populateSettingsForm();
   }
 
   private attachEvents(): void {
@@ -151,9 +185,9 @@ export class AstraDrawer {
 
     // Quick Chips
     const chips = this.container.querySelectorAll('.quick-chip');
-    chips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        const prompt = chip.getAttribute('data-prompt');
+    chips.forEach((c) => {
+      c.addEventListener('click', () => {
+        const prompt = c.getAttribute('data-prompt');
         if (prompt) {
           this.inputEl.value = prompt;
           this.handleSendMessage();
@@ -161,134 +195,210 @@ export class AstraDrawer {
       });
     });
 
-    // Settings Modal Open/Close
+    // Open Settings Modal
     const btnSettings = this.container.querySelector('#btn-ai-settings');
-    btnSettings?.addEventListener('click', () => this.toggleSettings(true));
+    btnSettings?.addEventListener('click', () => this.openSettingsModal());
 
+    // Close Settings Modal
     const btnCloseSettings = this.container.querySelector('#btn-close-settings');
-    btnCloseSettings?.addEventListener('click', () => this.toggleSettings(false));
+    btnCloseSettings?.addEventListener('click', () => this.closeSettingsModal());
 
-    // Provider Change
-    const selectProvider = this.container.querySelector('#select-ai-provider') as HTMLSelectElement;
-    const selectModel = this.container.querySelector('#select-ai-model') as HTMLSelectElement;
-    const groupKey = this.container.querySelector('#group-api-key') as HTMLElement;
-    const groupUrl = this.container.querySelector('#group-base-url') as HTMLElement;
-
-    selectProvider.addEventListener('change', () => {
-      const p = selectProvider.value;
-      if (p === 'gemini') {
-        selectModel.innerHTML = `
-          <option value="gemini-2.0-flash">gemini-2.0-flash (Fast & Accurate)</option>
-          <option value="gemini-1.5-pro">gemini-1.5-pro</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-        `;
-        groupKey.style.display = 'block';
-        groupUrl.style.display = 'none';
-      } else if (p === 'openai') {
-        selectModel.innerHTML = `
-          <option value="gpt-4o">gpt-4o (Omni State-of-the-Art)</option>
-          <option value="gpt-4o-mini">gpt-4o-mini</option>
-          <option value="o3-mini">o3-mini (Advanced Reasoning)</option>
-        `;
-        groupKey.style.display = 'block';
-        groupUrl.style.display = 'none';
-      } else if (p === 'anthropic') {
-        selectModel.innerHTML = `
-          <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet (High Intelligence)</option>
-          <option value="claude-3-5-haiku-20241022">claude-3-5-haiku (Lightning Speed)</option>
-        `;
-        groupKey.style.display = 'block';
-        groupUrl.style.display = 'none';
-      } else if (p === 'ollama') {
-        selectModel.innerHTML = `
-          <option value="llama3.2">llama3.2</option>
-          <option value="mistral">mistral</option>
-          <option value="deepseek-r1">deepseek-r1</option>
-        `;
-        groupKey.style.display = 'none';
-        groupUrl.style.display = 'block';
-      }
+    // Provider Pills
+    const providerPills = this.container.querySelectorAll('.provider-pill');
+    providerPills.forEach((p) => {
+      p.addEventListener('click', () => {
+        providerPills.forEach((x) => x.classList.remove('active'));
+        p.classList.add('active');
+        const provider = p.getAttribute('data-provider') || 'gemini';
+        this.updateModelOptionsForProvider(provider);
+      });
     });
 
-    // Toggle Key Visibility
+    // Model Selector Change
+    const modelSelect = this.container.querySelector('#select-ai-model') as HTMLSelectElement;
+    modelSelect?.addEventListener('change', () => {
+      this.updateModelDescription(modelSelect.value);
+    });
+
+    // Toggle API Key Visibility
     const btnToggleVis = this.container.querySelector('#btn-toggle-key-vis');
     const inputKey = this.container.querySelector('#input-ai-key') as HTMLInputElement;
     btnToggleVis?.addEventListener('click', () => {
-      inputKey.type = inputKey.type === 'password' ? 'text' : 'password';
+      if (inputKey.type === 'password') {
+        inputKey.type = 'text';
+        btnToggleVis.textContent = '🔒';
+      } else {
+        inputKey.type = 'password';
+        btnToggleVis.textContent = '👁️';
+      }
     });
 
     // Temperature Slider
-    const rangeTemp = this.container.querySelector('#range-ai-temp') as HTMLInputElement;
-    const valTemp = this.container.querySelector('#val-ai-temp') as HTMLElement;
-    rangeTemp?.addEventListener('input', () => {
-      valTemp.textContent = parseFloat(rangeTemp.value).toFixed(2);
+    const tempRange = this.container.querySelector('#range-ai-temp') as HTMLInputElement;
+    const tempVal = this.container.querySelector('#val-ai-temp');
+    const tempHint = this.container.querySelector('#temp-role-hint');
+    tempRange?.addEventListener('input', () => {
+      const v = parseFloat(tempRange.value);
+      if (tempVal) tempVal.textContent = v.toFixed(2);
+      if (tempHint) {
+        tempHint.textContent = v <= 0.2 ? 'Deterministic Physics' : v <= 0.5 ? 'Balanced Flight Plan' : 'Creative Exploration';
+      }
     });
 
     // Test Connection
     const btnTest = this.container.querySelector('#btn-test-ai-key');
-    const testStatus = this.container.querySelector('#test-key-status') as HTMLElement;
+    const statusDiv = this.container.querySelector('#test-key-status') as HTMLElement;
     btnTest?.addEventListener('click', async () => {
-      testStatus.style.display = 'block';
-      testStatus.className = 'test-key-result text-amber';
-      testStatus.textContent = 'Testing connection to AI provider...';
-
-      this.copilot.byok.saveConfig({
-        provider: selectProvider.value as any,
-        model: selectModel.value,
-        apiKey: inputKey.value.trim(),
-        baseUrl: (this.container.querySelector('#input-ai-url') as HTMLInputElement).value.trim(),
-        temperature: parseFloat(rangeTemp.value)
-      });
+      this.saveCurrentFormToManager();
+      btnTest.textContent = 'Testing...';
+      btnTest.setAttribute('disabled', 'true');
+      statusDiv.style.display = 'block';
+      statusDiv.className = 'test-key-result testing';
+      statusDiv.textContent = 'Pinging model endpoint...';
 
       const res = await this.copilot.byok.testConnection();
-      testStatus.className = res.success ? 'test-key-result text-emerald' : 'test-key-result text-red';
-      testStatus.textContent = res.message;
+      btnTest.removeAttribute('disabled');
+      btnTest.textContent = '⚡ Test Connection';
+
+      if (res.success) {
+        statusDiv.className = 'test-key-result success';
+        statusDiv.innerHTML = `✓ ${res.message} <span class="latency-badge">${res.latencyMs}ms</span>`;
+      } else {
+        statusDiv.className = 'test-key-result error';
+        statusDiv.textContent = `✕ ${res.message}`;
+      }
     });
 
     // Save Settings
     const btnSave = this.container.querySelector('#btn-save-ai-settings');
     btnSave?.addEventListener('click', () => {
-      this.copilot.byok.saveConfig({
-        provider: selectProvider.value as any,
-        model: selectModel.value,
-        apiKey: inputKey.value.trim(),
-        baseUrl: (this.container.querySelector('#input-ai-url') as HTMLInputElement).value.trim(),
-        temperature: parseFloat(rangeTemp.value)
-      });
-      this.toggleSettings(false);
+      this.saveCurrentFormToManager();
+      this.closeSettingsModal();
+      this.renderMessages();
     });
   }
 
-  public toggleDrawer(open?: boolean): void {
-    this.isOpen = open !== undefined ? open : !this.isOpen;
-    if (this.isOpen) {
-      this.drawerEl.classList.add('open');
-      this.inputEl.focus();
-    } else {
-      this.drawerEl.classList.remove('open');
+  private updateModelOptionsForProvider(provider: string, selectedModel?: string): void {
+    const modelSelect = this.container.querySelector('#select-ai-model') as HTMLSelectElement;
+    const keyGroup = this.container.querySelector('#group-api-key') as HTMLElement;
+    const urlGroup = this.container.querySelector('#group-base-url') as HTMLElement;
+    const getKeyLink = this.container.querySelector('#link-get-api-key') as HTMLAnchorElement;
+
+    if (!modelSelect) return;
+    modelSelect.innerHTML = '';
+
+    const models = PROVIDER_MODELS[provider] || [];
+    for (const m of models) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `[${m.badge}] ${m.name}`;
+      if (selectedModel && selectedModel === m.id) {
+        opt.selected = true;
+      }
+      modelSelect.appendChild(opt);
     }
+
+    if (provider === 'ollama') {
+      keyGroup.style.display = 'none';
+      urlGroup.style.display = 'block';
+    } else {
+      keyGroup.style.display = 'block';
+      urlGroup.style.display = 'none';
+
+      if (provider === 'gemini') {
+        getKeyLink.href = 'https://aistudio.google.com/app/apikey';
+        getKeyLink.textContent = 'Get Gemini Key ↗';
+      } else if (provider === 'openai') {
+        getKeyLink.href = 'https://platform.openai.com/api-keys';
+        getKeyLink.textContent = 'Get OpenAI Key ↗';
+      } else if (provider === 'anthropic') {
+        getKeyLink.href = 'https://console.anthropic.com/settings/keys';
+        getKeyLink.textContent = 'Get Claude Key ↗';
+      } else if (provider === 'deepseek') {
+        getKeyLink.href = 'https://platform.deepseek.com/api_keys';
+        getKeyLink.textContent = 'Get DeepSeek Key ↗';
+      }
+    }
+
+    this.updateModelDescription(modelSelect.value);
   }
 
-  public toggleSettings(open?: boolean): void {
-    this.isSettingsOpen = open !== undefined ? open : !this.isSettingsOpen;
-    this.settingsModalEl.style.display = this.isSettingsOpen ? 'flex' : 'none';
+  private updateModelDescription(modelId: string): void {
+    const hint = this.container.querySelector('#model-desc-hint');
+    if (!hint) return;
 
-    if (this.isSettingsOpen) {
-      const conf = this.copilot.byok.getConfig();
-      const selectProvider = this.container.querySelector('#select-ai-provider') as HTMLSelectElement;
-      const selectModel = this.container.querySelector('#select-ai-model') as HTMLSelectElement;
-      const inputKey = this.container.querySelector('#input-ai-key') as HTMLInputElement;
-      const inputUrl = this.container.querySelector('#input-ai-url') as HTMLInputElement;
-      const rangeTemp = this.container.querySelector('#range-ai-temp') as HTMLInputElement;
-      const valTemp = this.container.querySelector('#val-ai-temp') as HTMLElement;
+    for (const p in PROVIDER_MODELS) {
+      const match = PROVIDER_MODELS[p].find(m => m.id === modelId);
+      if (match) {
+        hint.textContent = match.description;
+        return;
+      }
+    }
+    hint.textContent = '';
+  }
 
-      selectProvider.value = conf.provider;
-      selectProvider.dispatchEvent(new Event('change'));
-      selectModel.value = conf.model;
-      inputKey.value = conf.apiKey;
-      inputUrl.value = conf.baseUrl || '';
-      rangeTemp.value = String(conf.temperature);
-      valTemp.textContent = conf.temperature.toFixed(2);
+  private populateSettingsForm(): void {
+    const conf = this.copilot.byok.getConfig();
+    const provider = conf.provider || 'gemini';
+
+    const pills = this.container.querySelectorAll('.provider-pill');
+    pills.forEach((p) => {
+      if (p.getAttribute('data-provider') === provider) {
+        p.classList.add('active');
+      } else {
+        p.classList.remove('active');
+      }
+    });
+
+    this.updateModelOptionsForProvider(provider, conf.model);
+
+    const inputKey = this.container.querySelector('#input-ai-key') as HTMLInputElement;
+    if (inputKey) inputKey.value = conf.apiKey;
+
+    const inputUrl = this.container.querySelector('#input-ai-url') as HTMLInputElement;
+    if (inputUrl) inputUrl.value = conf.baseUrl || '';
+
+    const tempRange = this.container.querySelector('#range-ai-temp') as HTMLInputElement;
+    const tempVal = this.container.querySelector('#val-ai-temp');
+    if (tempRange) tempRange.value = String(conf.temperature ?? 0.3);
+    if (tempVal) tempVal.textContent = (conf.temperature ?? 0.3).toFixed(2);
+  }
+
+  private saveCurrentFormToManager(): void {
+    const activePill = this.container.querySelector('.provider-pill.active');
+    const provider = activePill?.getAttribute('data-provider') as any || 'gemini';
+    const modelSelect = this.container.querySelector('#select-ai-model') as HTMLSelectElement;
+    const inputKey = this.container.querySelector('#input-ai-key') as HTMLInputElement;
+    const inputUrl = this.container.querySelector('#input-ai-url') as HTMLInputElement;
+    const tempRange = this.container.querySelector('#range-ai-temp') as HTMLInputElement;
+
+    this.copilot.byok.saveConfig({
+      provider,
+      model: modelSelect ? modelSelect.value : 'gemini-2.5-flash',
+      apiKey: inputKey ? inputKey.value.trim() : '',
+      baseUrl: inputUrl ? inputUrl.value.trim() : '',
+      temperature: tempRange ? parseFloat(tempRange.value) : 0.3
+    });
+  }
+
+  public openSettingsModal(): void {
+    this.populateSettingsForm();
+    this.settingsModalEl.style.display = 'flex';
+  }
+
+  public closeSettingsModal(): void {
+    this.settingsModalEl.style.display = 'none';
+    const statusDiv = this.container.querySelector('#test-key-status') as HTMLElement;
+    if (statusDiv) statusDiv.style.display = 'none';
+  }
+
+  public toggleDrawer(force?: boolean): void {
+    this.isOpen = force !== undefined ? force : !this.isOpen;
+    if (this.isOpen) {
+      this.drawerEl.classList.remove('hidden');
+      this.inputEl.focus();
+    } else {
+      this.drawerEl.classList.add('hidden');
     }
   }
 
@@ -298,101 +408,66 @@ export class AstraDrawer {
 
     this.inputEl.value = '';
     this.renderMessages();
-    this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
 
     await this.copilot.sendMessage(text);
     this.renderMessages();
-    this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
-  }
-
-  private formatMarkdown(content: string): string {
-    let html = content
-      .replace(/### (.*?)\n/g, '<div class="md-h3">$1</div>')
-      .replace(/## (.*?)\n/g, '<div class="md-h2">$1</div>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/```json\s*([\s\S]*?)\s*```/g, '<pre class="md-code"><code>$1</code></pre>')
-      .replace(/\n/g, '<br>');
-
-    return html;
   }
 
   public renderMessages(): void {
-    this.chatMessagesEl.innerHTML = this.copilot.messages.map(msg => `
-      <div class="chat-bubble-row ${msg.role === 'user' ? 'user-msg' : 'assistant-msg'}">
-        <div class="chat-avatar">${msg.role === 'user' ? '👨‍🚀' : '✨'}</div>
-        <div class="chat-bubble-card">
-          <div class="chat-sender-name">${msg.role === 'user' ? 'MISSION COMMANDER' : 'ASTRA AI COPILOT'}</div>
-          <div class="chat-body-text">${this.formatMarkdown(msg.content)}</div>
-          ${msg.action ? this.renderActionCard(msg.action) : ''}
-        </div>
-      </div>
-    `).join('');
+    if (!this.chatMessagesEl) return;
+    this.chatMessagesEl.innerHTML = '';
+
+    for (const msg of this.copilot.messages) {
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble chat-bubble-${msg.role}`;
+
+      const sender = document.createElement('div');
+      sender.className = 'chat-sender-tag';
+      sender.textContent = msg.role === 'user' ? 'FLIGHT DIRECTOR' : 'ASTRA AI';
+
+      const body = document.createElement('div');
+      body.className = 'chat-body-text';
+      body.innerHTML = this.formatMarkdown(msg.content);
+
+      bubble.appendChild(sender);
+      bubble.appendChild(body);
+
+      if (msg.action && (msg.action.action === 'set_maneuver_node' || msg.action.action === 'execute_burn')) {
+        const dv = msg.action.prograde || 0;
+        const dur = msg.action.duration || 0;
+        const actionBtn = document.createElement('button');
+        actionBtn.className = 'maneuver-burn-trigger';
+        actionBtn.innerHTML = `
+          <span class="burn-fire-icon">🔥</span>
+          <div class="burn-btn-content">
+            <div class="burn-title-main">EXECUTE BURN NODE</div>
+            <div class="burn-val-sub">ΔV: ${dv.toFixed(1)} m/s (Burn: ${dur.toFixed(1)}s)</div>
+          </div>
+        `;
+        actionBtn.addEventListener('click', () => {
+          if (msg.action) this.onExecuteManeuver(msg.action);
+        });
+        bubble.appendChild(actionBtn);
+      }
+
+      this.chatMessagesEl.appendChild(bubble);
+    }
 
     if (this.copilot.isThinking) {
-      this.chatMessagesEl.innerHTML += `
-        <div class="chat-bubble-row assistant-msg">
-          <div class="chat-avatar">✨</div>
-          <div class="chat-bubble-card thinking-bubble">
-            <span class="pulse-dot"></span> Computing orbital mechanics & trajectory vectors...
-          </div>
-        </div>
-      `;
+      const thinkingBubble = document.createElement('div');
+      thinkingBubble.className = 'chat-bubble chat-bubble-assistant thinking';
+      thinkingBubble.innerHTML = '<span class="thinking-dots">Calculating trajectory vector...</span>';
+      this.chatMessagesEl.appendChild(thinkingBubble);
     }
 
-    const actionBtns = this.chatMessagesEl.querySelectorAll('.btn-execute-action');
-    actionBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const actionIdx = parseInt(btn.getAttribute('data-action-idx') || '0', 10);
-        const targetMsg = this.copilot.messages[actionIdx];
-        if (targetMsg && targetMsg.action) {
-          this.onExecuteManeuver(targetMsg.action);
-        }
-      });
-    });
+    this.chatMessagesEl.scrollTop = this.chatMessagesEl.scrollHeight;
   }
 
-  private renderActionCard(action: AIManeuverAction): string {
-    const actionIdx = this.copilot.messages.findIndex(m => m.action === action);
-
-    if (action.action === 'set_maneuver_node') {
-      return `
-        <div class="action-card-box">
-          <div class="action-card-title">🎯 MANEUVER NODE COMPUTED</div>
-          <div class="action-metrics-grid">
-            <div>Prograde ΔV: <b>+${action.prograde || 0} m/s</b></div>
-            <div>Time to Burn: <b>${action.timeToNode || 0}s</b></div>
-          </div>
-          <button class="btn-execute-action btn-primary" data-action-idx="${actionIdx}">
-            ⚡ EXECUTE BURN NODE
-          </button>
-        </div>
-      `;
-    }
-
-    if (action.action === 'set_sas_mode') {
-      return `
-        <div class="action-card-box">
-          <div class="action-card-title">🧭 SAS ATTITUDE GUIDANCE</div>
-          <div>Aligning vehicle forward vector to <b>${action.mode?.toUpperCase()}</b>.</div>
-          <button class="btn-execute-action btn-primary" data-action-idx="${actionIdx}">
-            ORIENT SPACECRAFT
-          </button>
-        </div>
-      `;
-    }
-
-    if (action.action === 'stage_separation') {
-      return `
-        <div class="action-card-box">
-          <div class="action-card-title">🚀 STAGE SEPARATION READY</div>
-          <button class="btn-execute-action btn-primary" data-action-idx="${actionIdx}">
-            SEPARATE STAGE NOW
-          </button>
-        </div>
-      `;
-    }
-
-    return '';
+  private formatMarkdown(text: string): string {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
   }
 }
