@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GRAVITAS // WebGPU Barnes-Hut N-Body Simulator</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%2306b6d4'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- WebGPU Canvas -->
+      <canvas id="canvas-webgpu"></canvas>
+
+      <!-- Floating HUD Header -->
+      <header class="hud-header">
+        <div class="logo-container">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"></circle>
+            <ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)"></ellipse>
+            <circle cx="12" cy="12" r="2.5" fill="currentColor"></circle>
+          </svg>
+          <span class="app-title">GRAVITAS</span>
+          <span class="app-version">v1.0-WEBGPU</span>
+        </div>
+      </header>
+
+      <!-- Sidebar Controls & Telemetry Panel -->
+      <aside class="sidebar">
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-tab="presets">PRESETS</button>
+          <button class="nav-tab" data-tab="controls">CONTROLS</button>
+          <button class="nav-tab" data-tab="telemetry">TELEMETRY</button>
+        </nav>
+
+        <div class="tab-content-wrapper">
+          <div id="tab-presets" class="tab-pane active">
+            <div id="presets-content"></div>
+          </div>
+          <div id="tab-controls" class="tab-pane">
+            <div id="controls-content"></div>
+          </div>
+          <div id="tab-telemetry" class="tab-pane">
+            <div id="telemetry-content"></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- WebGPU Unsupported Fallback Overlay (Hidden by default) -->
+      <div id="webgpu-fallback" class="overlay-banner" style="display: none;">
+        <div class="overlay-card">
+          <div class="overlay-title">WebGPU Required</div>
+          <div class="overlay-desc">
+            Your browser or GPU environment does not currently support WebGPU.
+            Please open this simulator in a modern WebGPU-enabled browser such as Google Chrome, Microsoft Edge, Brave, or Firefox Nightly with hardware acceleration enabled.
+          </div>
+          <button class="overlay-btn" onclick="location.reload()">Retry Connection</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

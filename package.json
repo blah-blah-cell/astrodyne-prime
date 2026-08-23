@@ -1,0 +1,20 @@
+{
+  "name": "gravitas-nbody-sim",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-Grade Barnes-Hut N-Body WebGPU Physics Simulator modeling 500,000+ interacting bodies in real-time.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide": "^0.475.0"
+  },
+  "devDependencies": {
+    "@webgpu/types": "^0.1.54",
+    "typescript": "^5.7.3",
+    "vite": "^6.2.0"
+  }
+}
