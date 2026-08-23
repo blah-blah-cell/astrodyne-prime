@@ -21,13 +21,13 @@ From orbital insertion burns and atmospheric Max-Q aerothermodynamics to interst
 
 ## 📸 Real Engine Visuals (Captured Directly from WebGPU)
 
-| 🚀 Flight Deck HUD & 3D NavBall | 🌌 Galaxy Collision (500,000 Particles) |
+| 🚀 White Minimalist Flight Deck & 3D NavBall | 🌌 Galaxy Collision (500,000 Particles) |
 |:---:|:---:|
-| <img src="screenshots/astrodyne_flight_deck.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
+| <img src="screenshots/astrodyne_white_flight_deck.png" width="100%" alt="Flight Deck HUD" /> | <img src="screenshots/astrodyne_white_galaxy_collision.png" width="100%" alt="Galaxy Collision" /> |
 
-| 🕳️ Relativistic Black Hole Accretion & Tidal Disruption Event (TDE) |
+| 🤖 ASTRA AI Autonomous Orbital Copilot (BYOK Integration) |
 |:---:|
-| <img src="screenshots/astrodyne_black_hole_tde.png" width="100%" alt="Black Hole TDE" /> |
+| <img src="screenshots/astrodyne_white_astra_copilot.png" width="100%" alt="ASTRA AI Copilot" /> |
 
 ---
 
