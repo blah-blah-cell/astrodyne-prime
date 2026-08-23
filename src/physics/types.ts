@@ -260,8 +260,28 @@ export interface AIConfig {
   temperature: number;
 }
 
+export interface PartBlueprint {
+  definitionId: string;
+  position?: [number, number, number];
+  rotation?: [number, number, number, number];
+}
+
 export interface AIManeuverAction {
-  action: 'set_maneuver_node' | 'execute_burn' | 'set_sas_mode' | 'generate_scenario' | 'stage_separation';
+  action: 
+    | 'set_maneuver_node' 
+    | 'execute_burn' 
+    | 'set_sas_mode' 
+    | 'set_throttle'
+    | 'stage_separation'
+    | 'build_machine'
+    | 'launch_custom_vehicle'
+    | 'spawn_celestial_body'
+    | 'set_time_warp'
+    | 'switch_mode'
+    | 'load_scenario'
+    | 'generate_scenario';
+  
+  // Orbital Flight Parameters
   prograde?: number;
   normal?: number;
   radial?: number;
@@ -270,8 +290,27 @@ export interface AIManeuverAction {
   throttle?: number;
   mode?: SASMode;
   description?: string;
+  
+  // AXIOM Modular Builder Parameters
+  parts?: PartBlueprint[];
+  machineName?: string;
+  clearExisting?: boolean;
+  launchAfterBuild?: boolean;
+  
+  // Simulation & Celestial Controls
+  targetMode?: 'SPACEFLIGHT' | 'BUILDER';
+  scenarioId?: string;
   scenarioName?: string;
   scenarioCode?: string;
+  warp?: number;
+  body?: {
+    name: string;
+    mass: number;
+    radius: number;
+    position: [number, number, number];
+    velocity: [number, number, number];
+    color?: [number, number, number];
+  };
 }
 
 export interface AIMessage {

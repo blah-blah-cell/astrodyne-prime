@@ -4,7 +4,7 @@ import { TelemetryPanel } from './telemetry-panel.js';
 import { FlightDirectorHUD } from './flight-director-hud.js';
 import { AstraDrawer } from './astra-drawer.js';
 import { AstraAICopilot } from '../ai/ai-copilot.js';
-import { AIManeuverAction, CameraViewMode, MouseTool, PresetConfig, RocketStage } from '../physics/types.js';
+import { AIManeuverAction, CameraViewMode, CelestialBodyInfo, MouseTool, PresetConfig, RocketStage } from '../physics/types.js';
 import { NBodyEngine } from '../physics/nbody-engine.js';
 import { ParticleRenderer } from '../renderer/renderer.js';
 import { PRESETS } from '../physics/presets.js';
@@ -43,7 +43,7 @@ export class UIController {
     this.renderer = renderer;
     this.onLoadPreset = onLoadPreset;
 
-    // 1. AI Copilot Instance
+    // 1. AI Copilot Instance with Action Callback
     this.astraCopilot = new AstraAICopilot(
       engine,
       engine.spacecraft,
@@ -99,6 +99,12 @@ export class UIController {
       () => this.handleLaunchCustomMachine()
     );
 
+    // Context Bridge for AI Telemetry
+    this.astraCopilot.setContextBridge({
+      getCurrentMode: () => this.currentMode,
+      getPartGraph: () => this.partGraph
+    });
+
     this.telemetryPanel = new TelemetryPanel(telemContainer, engine.telemetry);
     
     this.presetsPanel = new PresetsPanel(presetsContainer, (preset, count) => {
@@ -153,7 +159,7 @@ export class UIController {
     });
   }
 
-  private handleLaunchCustomMachine(): void {
+  public handleLaunchCustomMachine(): void {
     const totalMass = this.partGraph.assembly.totalMassKg || 5.0;
     
     let totalThrustN = 0;
@@ -188,7 +194,7 @@ export class UIController {
     };
 
     this.engine.spacecraft.active = true;
-    this.engine.spacecraft.name = 'AXIOM-1 MK-I';
+    this.engine.spacecraft.name = this.partGraph.assembly.name || 'AXIOM-1 MK-I';
     this.engine.spacecraft.stages = [customStage];
     this.engine.spacecraft.currentStageIndex = 0;
     this.engine.spacecraft.position = [0, 10.5, 0];
@@ -221,11 +227,12 @@ export class UIController {
     this.engine.mouseToolId = (tool === MouseTool.GRAVITY_WELL) ? 1 : (tool === MouseTool.REPULSOR) ? 2 : 0;
   }
 
-  private handleAIManeuverAction(action: AIManeuverAction): void {
+  public handleAIManeuverAction(action: AIManeuverAction): void {
+    console.log('[ASTRA AI Action Received]', action);
     const sc = this.engine.spacecraft;
-    if (!sc) return;
 
-    if (action.action === 'set_maneuver_node') {
+    // 1. Orbital Maneuvers & Flight Guidance
+    if (action.action === 'set_maneuver_node' && sc) {
       sc.addManeuverNode(
         action.timeToNode || 10.0,
         action.prograde || 0,
@@ -234,13 +241,96 @@ export class UIController {
         action.description || 'AI Computed Maneuver'
       );
       sc.executeActiveManeuver();
-    } else if (action.action === 'execute_burn') {
+    } else if (action.action === 'execute_burn' && sc) {
       sc.throttle = action.throttle ?? 1.0;
       if (action.mode) sc.setSASMode(action.mode);
-    } else if (action.action === 'set_sas_mode' && action.mode) {
+    } else if (action.action === 'set_throttle' && sc) {
+      sc.throttle = Math.max(0.0, Math.min(1.0, action.throttle ?? 1.0));
+    } else if (action.action === 'set_sas_mode' && action.mode && sc) {
       sc.setSASMode(action.mode);
-    } else if (action.action === 'stage_separation') {
+    } else if (action.action === 'stage_separation' && sc) {
       sc.separateStage();
+    }
+
+    // 2. AXIOM Machine Synthesis & Direct Creation
+    else if (action.action === 'build_machine') {
+      if (action.clearExisting) {
+        this.partGraph.clear();
+        while (this.builderViewport.scene.children.length > 0) {
+          this.builderViewport.scene.remove(this.builderViewport.scene.children[0]);
+        }
+      }
+
+      if (action.machineName) {
+        this.partGraph.assembly.name = action.machineName;
+      }
+
+      if (action.parts && action.parts.length > 0) {
+        for (const p of action.parts) {
+          const def = this.partGraph.getDefinition(p.definitionId);
+          if (!def) continue;
+
+          const mesh = def.createMesh();
+          const pos = p.position || [0, 0, 0];
+          const quat = p.rotation || [0, 0, 0, 1];
+
+          mesh.position.set(...pos);
+          mesh.quaternion.set(...quat);
+          this.builderViewport.scene.add(mesh);
+
+          const instanceId = `part_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+          this.partGraph.addPart({
+            instanceId,
+            definitionId: def.id,
+            position: pos,
+            rotationQuaternion: quat,
+            attachedSockets: new Map(),
+            mesh
+          });
+        }
+      }
+
+      this.builderUI.updateTelemetry();
+      this.builderViewport.updateSocketMarkers();
+
+      if (action.launchAfterBuild) {
+        this.handleLaunchCustomMachine();
+      } else {
+        document.getElementById('btn-nav-builder')?.click();
+      }
+    }
+
+    // 3. Direct Launch Trigger
+    else if (action.action === 'launch_custom_vehicle') {
+      this.handleLaunchCustomMachine();
+    }
+
+    // 4. Mode Switching
+    else if (action.action === 'switch_mode') {
+      if (action.targetMode === 'BUILDER') {
+        document.getElementById('btn-nav-builder')?.click();
+      } else {
+        document.getElementById('btn-nav-spaceflight')?.click();
+      }
+    }
+
+    // 5. Celestial Body Injection
+    else if (action.action === 'spawn_celestial_body' && action.body) {
+      const b = action.body;
+      const newBody: CelestialBodyInfo = {
+        index: this.engine.celestialBodies.length,
+        name: b.name,
+        radius: b.radius,
+        mass: b.mass,
+        color: b.color || [0.2, 0.7, 0.9]
+      };
+      this.engine.celestialBodies.push(newBody);
+      console.log(`[ASTRA AI] Spawned new celestial body: ${b.name}`);
+    }
+
+    // 6. Time Warp
+    else if (action.action === 'set_time_warp' && action.warp) {
+      this.engine.params.timeStep = action.warp * 0.016;
     }
   }
 

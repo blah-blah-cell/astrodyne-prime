@@ -66,16 +66,18 @@ export class BYOKManager {
     };
 
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return {
-          provider: parsed.provider || defaultConf.provider,
-          apiKey: parsed.apiKey ? this.decodeKey(parsed.apiKey) : '',
-          model: parsed.model || defaultConf.model,
-          baseUrl: parsed.baseUrl || '',
-          temperature: parsed.temperature ?? defaultConf.temperature
-        };
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return {
+            provider: parsed.provider || defaultConf.provider,
+            apiKey: parsed.apiKey ? this.decodeKey(parsed.apiKey) : '',
+            model: parsed.model || defaultConf.model,
+            baseUrl: parsed.baseUrl || '',
+            temperature: parsed.temperature ?? defaultConf.temperature
+          };
+        }
       }
     } catch (e) {
       console.warn('Failed to load AI BYOK config:', e);
@@ -86,11 +88,13 @@ export class BYOKManager {
   public saveConfig(conf: AIConfig): void {
     this.config = { ...conf };
     try {
-      const toStore = {
-        ...this.config,
-        apiKey: this.encodeKey(this.config.apiKey)
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      if (typeof localStorage !== 'undefined') {
+        const toStore = {
+          ...this.config,
+          apiKey: this.encodeKey(this.config.apiKey)
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+      }
     } catch (e) {
       console.error('Failed to save AI BYOK config:', e);
     }
