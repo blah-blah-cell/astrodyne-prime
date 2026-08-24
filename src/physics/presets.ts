@@ -203,7 +203,7 @@ export function generateRocketLaunchOrbital(totalCount: number) {
 
   const G = 1.0;
   const M_Earth = 10000.0;
-  const R_Earth = 45.0;
+  const R_Earth = 50.0;
 
   // Central Earth
   positions[0] = 0;
@@ -213,7 +213,7 @@ export function generateRocketLaunchOrbital(totalCount: number) {
   velocities[0] = 0;
   velocities[1] = 0;
   velocities[2] = 0;
-  velocities[3] = ParticleType.BLACK_HOLE;
+  velocities[3] = ParticleType.PLANET;
 
   // Atmosphere & Satellite debris belt
   for (let i = 1; i < totalCount; i++) {
@@ -1013,9 +1013,19 @@ export const PRESETS: PresetConfig[] = [
     recommendedTheta: 0.5,
     defaultG: 1.0,
     defaultDt: 0.03,
-    cameraDistance: 120,
+    cameraDistance: 220,
     cameraMode: CameraViewMode.CHASE_SPACECRAFT,
     hasSpacecraft: true,
+    bodies: [{
+      index: 0,
+      name: 'Earth',
+      radius: 50.0,
+      mass: 10000.0,
+      color: [0.18, 0.42, 0.78],
+      hasAtmosphere: true,
+      atmosphereHeight: 60.0,
+      atmosphereDensity0: 1.225
+    }],
     generate: generateRocketLaunchOrbital
   },
   {

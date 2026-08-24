@@ -85,8 +85,10 @@ export const PART_CATALOG: PartDefinition[] = [
     physicsShape: 'CYLINDER',
     properties: {
       maxTorqueNm: 4.5,
+      nominalVoltageV: 12,
       freeSpeedRpm: 120,
       stallTorqueNm: 4.5,
+      motorTorqueConstantNmPerA: 0.18,
       motorType: 'BRUSHED_DC'
     },
     sockets: [
@@ -276,7 +278,7 @@ export const PART_CATALOG: PartDefinition[] = [
     centerOfMass: [0.06, 0.075, 0],
     dimensions: [0.12, 0.15, 0.003],
     physicsShape: 'BOX',
-    properties: { dragCoefficientCd: 0.02 },
+    properties: { dragCoefficientCd: 0.02, controlSurfaceAreaM2: 0.018, controlMomentArmM: 0.55 },
     sockets: [
       { id: 'root_mount', name: 'Fin Root Tab', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.MALE, localPosition: [0, 0.075, 0], localNormal: [-1, 0, 0] }
     ],
@@ -356,6 +358,56 @@ export const PART_CATALOG: PartDefinition[] = [
       hornMesh.position.y = 0.038;
       group.add(hornMesh);
       return group;
+    }
+  },
+
+  // =========================================================================
+  // 5. ELECTRICAL POWER BUS
+  // =========================================================================
+  {
+    id: 'battery_lipo_4s_10ah',
+    name: '4S LiPo Battery (10 Ah)',
+    category: PartCategory.ELECTRONICS_LOGIC,
+    description: '14.8 V rechargeable power source with voltage sag and state-of-charge modeling.',
+    massKg: 0.92,
+    centerOfMass: [0, 0.04, 0],
+    dimensions: [0.14, 0.08, 0.05],
+    physicsShape: 'BOX',
+    properties: {
+      nominalVoltageV: 14.8,
+      batteryCapacityAh: 10,
+      batteryInternalResistanceOhm: 0.018,
+      batteryStateOfCharge: 1
+    },
+    sockets: [
+      { id: 'battery_mount', name: 'Battery Tray Mount', type: SocketType.SNAP_GRID, gender: SocketGender.NEUTRAL, localPosition: [0, 0, 0], localNormal: [0, -1, 0] }
+    ],
+    createMesh: () => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.08, 0.05), getStandardMaterials().electronics);
+      mesh.position.y = 0.04;
+      mesh.castShadow = true;
+      return mesh;
+    }
+  },
+  {
+    id: 'solar_panel_40w',
+    name: 'Deployable Solar Panel (40 W)',
+    category: PartCategory.ELECTRONICS_LOGIC,
+    description: 'High-efficiency photovoltaic panel with sun-incidence power generation.',
+    massKg: 0.48,
+    centerOfMass: [0, 0.015, 0],
+    dimensions: [0.45, 0.03, 0.28],
+    physicsShape: 'BOX',
+    properties: { solarPanelAreaM2: 0.126, solarEfficiency: 0.24 },
+    sockets: [
+      { id: 'solar_hinge', name: 'Deployment Hinge', type: SocketType.HINGE_PIVOT, gender: SocketGender.MALE, localPosition: [0, 0.015, 0], localNormal: [0, -1, 0] }
+    ],
+    createMesh: () => {
+      const material = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.55, roughness: 0.25 });
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.025, 0.28), material);
+      mesh.position.y = 0.015;
+      mesh.castShadow = true;
+      return mesh;
     }
   }
 ];

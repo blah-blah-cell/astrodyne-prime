@@ -12,6 +12,7 @@ import { NBodyEngine } from './physics/nbody-engine';
 import { ParticleRenderer } from './renderer/renderer';
 import { UIController } from './ui/ui-controller';
 import { PRESETS } from './physics/presets';
+import { ToolchainRegistry } from './engineering/toolchain-registry';
 
 async function main(): Promise<void> {
   const canvas = document.getElementById('canvas-webgpu') as HTMLCanvasElement;
@@ -42,6 +43,7 @@ async function main(): Promise<void> {
         maxComputeWorkgroupStorageSize: adapter.limits.maxComputeWorkgroupStorageSize
       }
     });
+    ToolchainRegistry.setState('webgpu', 'ready');
   } catch (err) {
     console.error('Failed to initialize WebGPU device:', err);
     if (fallbackOverlay) fallbackOverlay.style.display = 'flex';
@@ -109,9 +111,21 @@ async function main(): Promise<void> {
     if (preset.cameraMode) {
       renderParams.cameraMode = preset.cameraMode;
     }
+    if (preset.id === 'rocket_launch_orbital') {
+      renderParams.colorPalette = ColorPalette.PARTICLE_TYPE;
+      renderParams.pointSize = 1.2;
+      renderParams.bloomIntensity = 0.35;
+      renderParams.brightnessScale = 0.9;
+    } else {
+      renderParams.colorPalette = ColorPalette.BLACKBODY_PLANCK;
+      renderParams.pointSize = 2.0;
+      renderParams.bloomIntensity = 1.3;
+      renderParams.brightnessScale = 1.3;
+    }
 
     const generated = preset.generate(particleCount);
     engine.initParticles(generated.data);
+    engine.celestialBodies = preset.bodies || [];
 
     if (generated.spacecraftInit) {
       const scInit = generated.spacecraftInit;
@@ -122,16 +136,17 @@ async function main(): Promise<void> {
       engine.spacecraft.acceleration = [0, 0, 0];
       engine.spacecraft.stages = scInit.stages;
       engine.spacecraft.currentStageIndex = 0;
+      engine.spacecraft.dynamicsMode = 'normalized';
+      engine.spacecraft.centerGimbal();
       engine.spacecraft.throttle = 0.0;
       engine.spacecraft.isLaunchPad = !!scInit.isLaunchPad;
+      if (scInit.isLaunchPad) engine.spacecraft.launchPadLocation = [...scInit.position];
       engine.spacecraft.primaryBodyIndex = scInit.primaryBodyIndex;
       engine.spacecraft.calculateDeltaV();
       engine.spacecraft.updateKeplerianElements();
     } else {
       engine.spacecraft.active = false;
     }
-
-    engine.celestialBodies = preset.bodies || [];
 
     renderer.bindEngine(engine);
     renderer.camera.setDistance(preset.cameraDistance);

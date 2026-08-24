@@ -17,7 +17,7 @@ export class OpenSCADEvaluator {
     this.engine = engine;
   }
 
-  // Parse OpenSCAD / Parametric JS CAD script and execute CSG tree
+  // Execute the local parametric JavaScript DSL against the Manifold kernel.
   public async evaluateScript(script: string, customParams: Record<string, any> = {}): Promise<CADMeshResult> {
     const M = this.engine;
     
@@ -62,7 +62,7 @@ export class OpenSCADEvaluator {
       params: customParams
     };
 
-    // Preprocessing OpenSCAD syntax to JS DSL if user typed raw OpenSCAD
+    // Lightweight compatibility preprocessing for familiar variable names.
     const processedCode = this.transpileOpenSCAD(script);
 
     const fn = new Function('ctx', `
@@ -79,14 +79,14 @@ export class OpenSCADEvaluator {
     return this.engine.toThreeMesh(resultSolid);
   }
 
-  // Lightweight OpenSCAD transpile layer
+  // Lightweight CSG-script compatibility layer.
   private transpileOpenSCAD(code: string): string {
     let js = code;
 
     // Convert variables $fn -> fn
     js = js.replace(/\$fn/g, 'fn');
 
-    // If script contains `module main()` or direct OpenSCAD syntax, wrap into function return
+    // Wrap a top-level CSG expression when the script omitted an explicit return.
     if (!js.includes('return ') && (js.includes('difference(') || js.includes('union(') || js.includes('cube(') || js.includes('cylinder('))) {
       // Find top-level expression
       js = `return (() => {

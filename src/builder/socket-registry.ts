@@ -22,7 +22,7 @@ export class SocketRegistry {
       const worldNorm = localNorm.applyQuaternion(partQuat).normalize();
 
       worldSockets.push({
-        socket,
+        socket: { ...socket, isOccupied: instance.attachedSockets.has(socket.id) },
         partInstanceId: instance.instanceId,
         worldPosition: worldPos,
         worldNormal: worldNorm
@@ -70,13 +70,26 @@ export class SocketRegistry {
     sourceSocketLocal: AttachmentSocket,
     targetWorldSocket: WorldSocket
   ): { position: [number, number, number]; rotationQuaternion: [number, number, number, number] } {
+    return this.computeMateTransform(sourceSocketLocal, targetWorldSocket, 0, 0);
+  }
+
+  public static computeMateTransform(
+    sourceSocketLocal: AttachmentSocket,
+    targetWorldSocket: WorldSocket,
+    offsetM: number = 0,
+    twistDegrees: number = 0
+  ): { position: [number, number, number]; rotationQuaternion: [number, number, number, number] } {
     const targetNorm = targetWorldSocket.worldNormal.clone();
     const desiredSourceNorm = targetNorm.clone().negate();
-    const localSourceNorm = new THREE.Vector3(...sourceSocketLocal.localNormal);
+    const localSourceNorm = new THREE.Vector3(...sourceSocketLocal.localNormal).normalize();
 
     const rotQuat = new THREE.Quaternion().setFromUnitVectors(localSourceNorm, desiredSourceNorm);
+    if (twistDegrees) {
+      const twist = new THREE.Quaternion().setFromAxisAngle(targetNorm, THREE.MathUtils.degToRad(twistDegrees));
+      rotQuat.premultiply(twist).normalize();
+    }
     const localSourcePosRotated = new THREE.Vector3(...sourceSocketLocal.localPosition).applyQuaternion(rotQuat);
-    const requiredWorldPos = targetWorldSocket.worldPosition.clone().sub(localSourcePosRotated);
+    const requiredWorldPos = targetWorldSocket.worldPosition.clone().addScaledVector(targetNorm, offsetM).sub(localSourcePosRotated);
 
     return {
       position: [requiredWorldPos.x, requiredWorldPos.y, requiredWorldPos.z],

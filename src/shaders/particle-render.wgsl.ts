@@ -90,6 +90,10 @@ fn type_palette(p_type: u32) -> vec3<f32> {
     case 2u: { return vec3<f32>(0.1, 0.9, 0.8); }    // Gas / Accretion disc
     case 3u: { return vec3<f32>(1.2, 0.4, 0.05); }   // Black hole
     case 4u: { return vec3<f32>(1.0, 0.7, 0.0); }    // Trojan / Tracer
+    case 6u: { return vec3<f32>(0.82, 0.88, 0.94); } // Spacecraft
+    case 7u: { return vec3<f32>(0.95, 0.48, 0.12); } // Exhaust plume
+    case 8u: { return vec3<f32>(0.18, 0.48, 0.86); } // Planet
+    case 9u: { return vec3<f32>(0.58, 0.62, 0.68); } // Moon
     default: { return vec3<f32>(0.8, 0.8, 0.9); }    // Debris
   }
 }
@@ -129,6 +133,10 @@ fn vs_main(
   var base_size = camera.pointSize;
   if (p_type == 3u) {
     base_size *= 3.5; // Black holes larger
+  } else if (p_type == 8u) {
+    base_size *= 1.8; // Planets remain legible without filling the viewport
+  } else if (p_type == 9u) {
+    base_size *= 1.2;
   } else if (p_type == 1u) {
     base_size *= 0.8; // Dark matter smaller
   }

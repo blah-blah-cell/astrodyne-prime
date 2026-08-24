@@ -44,8 +44,8 @@ export class PresetsPanel {
       <div class="panel-section">
         <div class="preset-category-filter">
           <button class="filter-btn ${this.activeCategory === 'ALL' ? 'active' : ''}" data-cat="ALL">ALL (10)</button>
-          <button class="filter-btn ${this.activeCategory === 'VEHICLE' ? 'active' : ''}" data-cat="VEHICLE">🚀 SPACEFLIGHT</button>
-          <button class="filter-btn ${this.activeCategory === 'CELESTIAL' ? 'active' : ''}" data-cat="CELESTIAL">🪐 CELESTIAL</button>
+          <button class="filter-btn ${this.activeCategory === 'VEHICLE' ? 'active' : ''}" data-cat="VEHICLE">SPACEFLIGHT</button>
+          <button class="filter-btn ${this.activeCategory === 'CELESTIAL' ? 'active' : ''}" data-cat="CELESTIAL">CELESTIAL</button>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ export class PresetsPanel {
             <div class="preset-card ${preset.id === this.currentPresetId ? 'active' : ''}" data-preset-id="${preset.id}">
               <div class="preset-card-header">
                 <span class="preset-name">${preset.name}</span>
-                ${preset.hasSpacecraft ? '<span class="preset-spacecraft-badge">🚀 VEHICLE</span>' : ''}
+                ${preset.hasSpacecraft ? '<span class="preset-spacecraft-badge">VEHICLE</span>' : ''}
               </div>
               <div class="preset-category">${preset.category}</div>
               <div class="preset-desc">${preset.description}</div>

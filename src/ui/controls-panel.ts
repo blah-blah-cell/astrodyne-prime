@@ -55,19 +55,19 @@ export class ControlsPanel {
         <div class="panel-section-title">INTERACTIVE MOUSE TOOLS</div>
         <div class="tools-grid">
           <button class="tool-btn ${this.currentTool === MouseTool.ORBIT_CAMERA ? 'active' : ''}" data-tool="${MouseTool.ORBIT_CAMERA}">
-            <span class="tool-icon">🎥</span>
+            <span class="tool-icon">01</span>
             <span class="tool-name">Orbit Cam</span>
           </button>
           <button class="tool-btn ${this.currentTool === MouseTool.GRAVITY_WELL ? 'active' : ''}" data-tool="${MouseTool.GRAVITY_WELL}">
-            <span class="tool-icon">🧲</span>
+            <span class="tool-icon">02</span>
             <span class="tool-name">Gravity Well</span>
           </button>
           <button class="tool-btn ${this.currentTool === MouseTool.REPULSOR ? 'active' : ''}" data-tool="${MouseTool.REPULSOR}">
-            <span class="tool-icon">💥</span>
+            <span class="tool-icon">03</span>
             <span class="tool-name">Repulsor</span>
           </button>
           <button class="tool-btn ${this.currentTool === MouseTool.BLACK_HOLE_SPAWN ? 'active' : ''}" data-tool="${MouseTool.BLACK_HOLE_SPAWN}">
-            <span class="tool-icon">🕳️</span>
+            <span class="tool-icon">04</span>
             <span class="tool-name">Spawn BH</span>
           </button>
         </div>

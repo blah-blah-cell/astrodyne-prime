@@ -19,7 +19,7 @@ function assert(condition: boolean, testName: string, detail?: string) {
 }
 
 console.log('===============================================================');
-console.log('🤖 ASTRA AI: CONTEXT AWARENESS & DIRECT ACTION TEST SUITE');
+console.log('ASTRA: CONTEXT AWARENESS & DIRECT ACTION TEST SUITE');
 console.log('===============================================================\n');
 
 // 1. Setup Mock Engine, Spacecraft, PartGraph
@@ -107,7 +107,7 @@ copilot.sendMessage('Build a high-thrust 2-stage rocket with solid booster and l
         assert(throtMsg.action?.throttle === 1.0, 'AI commanded 100% full throttle');
 
         console.log('\n===============================================================');
-        console.log(`🏁 AI AGENT TEST SUITE: ${passed} PASSED, ${failed} FAILED`);
+        console.log(`AI AGENT TEST SUITE: ${passed} PASSED, ${failed} FAILED`);
         console.log('===============================================================\n');
 
         if (failed > 0) process.exit(1);

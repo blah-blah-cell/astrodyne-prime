@@ -139,6 +139,12 @@ export interface SpacecraftTelemetry {
   deltaVRemaining: number;
   thrustKN: number;
   throttle: number; // 0.0 to 1.0
+  engineIgnited: boolean;
+  massFlowRate: number;
+  gimbalPitchDeg: number;
+  gimbalYawDeg: number;
+  gimbalLimitDeg: number;
+  thrustDirection: [number, number, number];
   twr: number;
   isp: number;
   gForce: number;

@@ -1,5 +1,8 @@
 import initModule from 'manifold-3d';
 import * as THREE from 'three';
+import { ToolchainRegistry } from '../engineering/toolchain-registry.js';
+
+const manifoldWasmUrl = new URL('../../node_modules/manifold-3d/manifold.wasm', import.meta.url).href;
 
 export interface CADMeshResult {
   geometry: THREE.BufferGeometry;
@@ -9,32 +12,46 @@ export interface CADMeshResult {
   numVertices: number;
   numTriangles: number;
   stlData: string;
+  materialKey?: string;
+  materialName?: string;
+  densityGcm3?: number;
+  massKg?: number;
+  sourceLabel?: string;
 }
 
 export class ManifoldCADEngine {
   private static instance: ManifoldCADEngine;
   private wasm: any = null;
   private isInitialized = false;
+  private initializing: Promise<void> | null = null;
 
   public static async getInstance(): Promise<ManifoldCADEngine> {
     if (!ManifoldCADEngine.instance) {
       ManifoldCADEngine.instance = new ManifoldCADEngine();
-      await ManifoldCADEngine.instance.init();
     }
+    await ManifoldCADEngine.instance.init();
     return ManifoldCADEngine.instance;
   }
 
   public async init(): Promise<void> {
     if (this.isInitialized) return;
-    try {
-      this.wasm = await initModule();
-      this.wasm.setup();
-      this.isInitialized = true;
-      console.log('[ManifoldCADEngine] Manifold-3D WASM CSG Engine Initialized.');
-    } catch (err) {
-      console.error('[ManifoldCADEngine] Failed to initialize Manifold-3D WASM:', err);
-      throw err;
+    if (!this.initializing) {
+      this.initializing = (async () => {
+        try {
+          this.wasm = await initModule({ locateFile: () => manifoldWasmUrl });
+          this.wasm.setup();
+          this.isInitialized = true;
+          console.log('[ManifoldCADEngine] Manifold-3D WASM CSG Engine Initialized.');
+          ToolchainRegistry.setState('manifold', 'ready');
+        } catch (err) {
+          this.initializing = null;
+          console.error('[ManifoldCADEngine] Failed to initialize Manifold-3D WASM:', err);
+          ToolchainRegistry.setState('manifold', 'unavailable');
+          throw err;
+        }
+      })();
     }
+    await this.initializing;
   }
 
   public get Manifold() {
@@ -108,7 +125,7 @@ export class ManifoldCADEngine {
   }
 
   // Generate ASCII STL for 3D Printing
-  public generateSTL(rawMesh: any, solidName = 'OpenSCAD_Model'): string {
+  public generateSTL(rawMesh: any, solidName = 'Manifold_CSG_Model'): string {
     let stl = `solid ${solidName}\n`;
     const verts = rawMesh.vertProperties;
     const tris = rawMesh.triVerts;

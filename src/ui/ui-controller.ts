@@ -10,12 +10,14 @@ import { ParticleRenderer } from '../renderer/renderer.js';
 import { PRESETS } from '../physics/presets.js';
 import { PartGraph } from '../builder/part-graph.js';
 import { PART_CATALOG } from '../builder/catalog.js';
-import { PartCategory, SocketType, SocketGender } from '../builder/types.js';
+import { PartCategory, SocketType, SocketGender, PartDefinition } from '../builder/types.js';
 import { BuilderViewport } from '../builder/builder-view.js';
 import { BuilderUI } from '../builder/builder-ui.js';
 import { CADStudioView } from '../cad/cad-studio-view.js';
 import { RocketryStudioView } from '../rocketry/rocketry-studio-view.js';
 import { RoboticsStudioView } from '../robotics/robotics-studio-view.js';
+import * as THREE from 'three';
+import { EngineeringProjectSession } from '../engineering/project-session.js';
 
 export type StudioMode = 'SPACEFLIGHT' | 'BUILDER' | 'CAD' | 'ROCKETRY' | 'ROBOTICS';
 
@@ -108,7 +110,15 @@ export class UIController {
       builderContainer,
       this.builderViewport,
       this.partGraph,
-      () => this.handleLaunchCustomMachine()
+      () => this.handleLaunchCustomMachine(),
+      (script) => {
+        document.getElementById('btn-nav-cad')?.click();
+        const editor = document.getElementById('cad-code-editor') as HTMLTextAreaElement | null;
+        if (editor && this.cadStudio) {
+          editor.value = script;
+          void this.cadStudio.compileCurrentScript();
+        }
+      }
     );
 
     // 5. Initialize OpenSCAD CAD Studio Container
@@ -119,25 +129,59 @@ export class UIController {
     document.body.appendChild(cadContainer);
 
     this.cadStudio = new CADStudioView(cadContainer, (res) => {
-      // Import custom CAD mesh into AXIOM part graph
+      // Detach the imported part from the live CAD scene and normalize CAD Z-up
+      // millimetres to Assembly Y-up metres. This prevents later CAD rebuilds from
+      // mutating a part that has already been transferred.
       const customDefId = `cad_part_${Date.now()}`;
-      this.partGraph.registerDefinitions([{
+      const assemblyGeometry = res.geometry.clone();
+      assemblyGeometry.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
+      assemblyGeometry.computeBoundingBox();
+      const initialBounds = assemblyGeometry.boundingBox;
+      if (initialBounds) {
+        const center = initialBounds.getCenter(new THREE.Vector3());
+        assemblyGeometry.translate(-center.x, -center.y, -center.z);
+      }
+      assemblyGeometry.computeVertexNormals();
+      assemblyGeometry.computeBoundingBox();
+      assemblyGeometry.computeBoundingSphere();
+      const bounds = assemblyGeometry.boundingBox;
+      const sizeMm = bounds ? bounds.getSize(new THREE.Vector3()) : new THREE.Vector3(100, 100, 100);
+      const dimensionsM: [number, number, number] = [
+        Math.max(0.001, sizeMm.x * 0.001),
+        Math.max(0.001, sizeMm.y * 0.001),
+        Math.max(0.001, sizeMm.z * 0.001)
+      ];
+      const customDefinition: PartDefinition = {
         id: customDefId,
-        name: 'Custom CAD Solid',
+        name: res.sourceLabel && res.sourceLabel !== 'Parametric CAD' ? res.sourceLabel : 'Custom CAD Solid',
         category: PartCategory.STRUCTURAL,
-        description: `OpenSCAD generated solid (${(res.volumeMm3 / 1000).toFixed(1)} cm³)`,
-        massKg: Math.max(0.1, (res.volumeMm3 / 1000) * 0.00124),
+        description: `${res.sourceLabel ?? 'Parametric CAD'} · ${res.materialName ?? 'engineering material'} · ${(res.volumeMm3 / 1000).toFixed(1)} cm³`,
+        massKg: Math.max(0.0001, res.massKg ?? (res.volumeMm3 / 1000) * 0.00124),
         centerOfMass: [0, 0, 0],
-        dimensions: [0.1, 0.1, 0.1],
-        physicsShape: 'BOX',
-        createMesh: () => res.mesh.clone(),
+        dimensions: dimensionsM,
+        physicsShape: 'HULL',
+        createMesh: () => {
+          const sourceMaterial = Array.isArray(res.mesh.material) ? res.mesh.material[0] : res.mesh.material;
+          const material = sourceMaterial instanceof THREE.MeshStandardMaterial
+            ? sourceMaterial.clone()
+            : new THREE.MeshStandardMaterial({ color: 0x1769aa, metalness: 0.15, roughness: 0.52 });
+          const mesh = new THREE.Mesh(assemblyGeometry.clone(), material);
+          mesh.scale.setScalar(0.001); // CAD millimetres to SI metres
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          mesh.userData.cadSource = res.sourceLabel ?? 'Parametric CAD';
+          mesh.userData.units = 'm';
+          return mesh;
+        },
         sockets: [
-          { id: 'top', name: 'Top Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, 0.1, 0], localNormal: [0, 1, 0] },
-          { id: 'bottom', name: 'Bottom Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, -0.1, 0], localNormal: [0, -1, 0] }
+          { id: 'top', name: 'Top Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, dimensionsM[1] / 2, 0], localNormal: [0, 1, 0] },
+          { id: 'bottom', name: 'Bottom Hex Mount', type: SocketType.HEX_BOLT_MOUNT, gender: SocketGender.NEUTRAL, localPosition: [0, -dimensionsM[1] / 2, 0], localNormal: [0, -1, 0] }
         ]
-      }]);
+      };
+      this.partGraph.registerDefinitions([customDefinition]);
+      this.builderViewport.addPartAtNextFreePosition(customDefinition);
       document.getElementById('btn-nav-builder')?.click();
-    });
+    }, (analysis) => this.rocketryStudio?.applyCADAeroAnalysis(analysis));
 
     // 6. Initialize OpenRocket Studio Container
     const rocketryContainer = document.createElement('div');
@@ -148,17 +192,19 @@ export class UIController {
 
     this.rocketryStudio = new RocketryStudioView(rocketryContainer, (config, summary) => {
       // Direct Launch from OpenRocket to Spaceflight
+      const launchPreset = PRESETS.find(preset => preset.id === 'rocket_launch_orbital');
+      if (launchPreset) this.onLoadPreset(launchPreset, Math.max(10000, this.presetsPanel?.selectedCount ?? 10000));
       const totalMass = summary.stability.totalMassKg;
       const propMass = config.propellantMassKg;
       const dryMass = Math.max(0.1, totalMass - propMass);
 
       const customStage: RocketStage = {
         id: 1,
-        name: config.name || 'OpenRocket Booster',
+        name: config.name || 'Aerodynamics Booster',
         dryMass,
         fuelMass: propMass,
         maxFuelMass: propMass,
-        maxThrust: config.motorThrustN / 100,
+        maxThrust: config.motorThrustN,
         isp: 290,
         burnRate: propMass / Math.max(0.1, config.motorBurnTimeSec),
         ignited: true,
@@ -166,15 +212,24 @@ export class UIController {
       };
 
       this.engine.spacecraft.active = true;
-      this.engine.spacecraft.name = config.name || 'OpenRocket-1';
+      this.engine.spacecraft.name = config.name || 'Analysis Vehicle 1';
       this.engine.spacecraft.stages = [customStage];
       this.engine.spacecraft.currentStageIndex = 0;
-      this.engine.spacecraft.position = [0, 10.5, 0];
-      this.engine.spacecraft.velocity = [0, 0, 0];
-      this.engine.spacecraft.throttle = 1.0;
+      this.engine.spacecraft.dynamicsMode = 'si-km';
+      this.engine.spacecraft.centerGimbal();
+      this.engine.spacecraft.referenceAreaM2 = config.cadReferenceAreaM2 ?? Math.PI * Math.pow(config.bodyTube.outerDiameterM * 0.5, 2);
+      this.engine.spacecraft.dragCoefficient = config.cadEstimatedCd ?? 0.45;
+      this.engine.spacecraft.launchPadLocation = [...this.engine.spacecraft.position];
+      this.engine.spacecraft.throttle = 0;
       this.engine.spacecraft.isLaunchPad = true;
+      this.engine.spacecraft.currentThrustKN = 0;
+      this.engine.spacecraft.dynamicPressure = 0;
+      this.engine.spacecraft.maxQ = 0;
+      this.engine.spacecraft.controlSurfaceAreaM2 = Math.max(0.02, config.finSet.numFins * config.finSet.spanM * config.finSet.rootChordM * 0.5);
+      this.engine.spacecraft.controlSurfaceMomentArmM = Math.max(0.2, config.finSet.positionFromNoseM - summary.stability.xCg_Total);
       this.engine.spacecraft.calculateDeltaV();
       this.engine.spacecraft.updateKeplerianElements();
+      EngineeringProjectSession.setArtifact('flight', `${config.name} · ${totalMass.toFixed(3)} kg · ${config.motorThrustN.toFixed(1)} N`, { config, summary });
 
       document.getElementById('btn-nav-spaceflight')?.click();
     });
@@ -234,9 +289,11 @@ export class UIController {
     const cadCont = document.getElementById('cad-studio-container');
     const rockCont = document.getElementById('rocketry-studio-container');
     const robCont = document.getElementById('robotics-studio-container');
+    document.body.dataset.studio = 'spaceflight';
 
     const switchStudio = (mode: StudioMode, activeBtn: HTMLElement | null) => {
       this.currentMode = mode;
+      document.body.dataset.studio = mode.toLowerCase();
       allBtns.forEach(b => b?.classList.remove('active'));
       activeBtn?.classList.add('active');
 
@@ -276,11 +333,15 @@ export class UIController {
   }
 
   public handleLaunchCustomMachine(): void {
+    const launchPreset = PRESETS.find(preset => preset.id === 'rocket_launch_orbital');
+    if (launchPreset) this.onLoadPreset(launchPreset, Math.max(10000, this.presetsPanel?.selectedCount ?? 10000));
     const totalMass = this.partGraph.assembly.totalMassKg || 5.0;
     
     let totalThrustN = 0;
     let propellantKg = 0;
     let burnSec = 3.0;
+    let controlSurfaceAreaM2 = 0;
+    let controlMomentArmM = 0;
 
     for (const [_, inst] of this.partGraph.assembly.parts.entries()) {
       const def = this.partGraph.getDefinition(inst.definitionId);
@@ -289,11 +350,13 @@ export class UIController {
         propellantKg += def.properties.propellantMassKg || 0.5;
         burnSec = def.properties.burnTimeSec || 3.0;
       }
+      controlSurfaceAreaM2 += def?.properties?.controlSurfaceAreaM2 ?? 0;
+      controlMomentArmM = Math.max(controlMomentArmM, def?.properties?.controlMomentArmM ?? 0);
     }
 
-    if (totalThrustN === 0) {
-      totalThrustN = 800;
-      propellantKg = totalMass * 0.4;
+    if (totalThrustN <= 0 || propellantKg <= 0) {
+      this.builderUI.showStatus('LAUNCH BLOCKED · Add a rocket motor with thrust and propellant.');
+      return;
     }
 
     const customStage: RocketStage = {
@@ -302,7 +365,7 @@ export class UIController {
       dryMass: Math.max(1.0, totalMass - propellantKg),
       fuelMass: propellantKg,
       maxFuelMass: propellantKg,
-      maxThrust: totalThrustN / 100,
+      maxThrust: totalThrustN,
       isp: 280,
       burnRate: propellantKg / burnSec,
       ignited: true,
@@ -313,12 +376,19 @@ export class UIController {
     this.engine.spacecraft.name = this.partGraph.assembly.name || 'AXIOM-1 MK-I';
     this.engine.spacecraft.stages = [customStage];
     this.engine.spacecraft.currentStageIndex = 0;
-    this.engine.spacecraft.position = [0, 10.5, 0];
-    this.engine.spacecraft.velocity = [0, 0, 0];
-    this.engine.spacecraft.throttle = 1.0;
+    this.engine.spacecraft.dynamicsMode = 'si-km';
+    this.engine.spacecraft.centerGimbal();
+    this.engine.spacecraft.launchPadLocation = [...this.engine.spacecraft.position];
+    this.engine.spacecraft.throttle = 0;
     this.engine.spacecraft.isLaunchPad = true;
+    this.engine.spacecraft.currentThrustKN = 0;
+    this.engine.spacecraft.dynamicPressure = 0;
+    this.engine.spacecraft.maxQ = 0;
+    this.engine.spacecraft.controlSurfaceAreaM2 = Math.max(0.02, controlSurfaceAreaM2);
+    this.engine.spacecraft.controlSurfaceMomentArmM = Math.max(0.2, controlMomentArmM);
     this.engine.spacecraft.calculateDeltaV();
     this.engine.spacecraft.updateKeplerianElements();
+    EngineeringProjectSession.setArtifact('flight', `${this.engine.spacecraft.name} · ${totalMass.toFixed(3)} kg · ${totalThrustN.toFixed(1)} N`, { assembly: JSON.parse(this.partGraph.serialize()) });
 
     document.getElementById('btn-nav-spaceflight')?.click();
     console.log(`[AXIOM] Launched Custom Machine with ${totalThrustN}N thrust!`);
@@ -404,10 +474,10 @@ export class UIController {
     // 2. AXIOM Machine Synthesis & Direct Creation
     else if (action.action === 'build_machine') {
       if (action.clearExisting) {
+        this.builderViewport.setActivePartDef(null);
+        this.builderViewport.selectPart(null);
         this.partGraph.clear();
-        while (this.builderViewport.scene.children.length > 0) {
-          this.builderViewport.scene.remove(this.builderViewport.scene.children[0]);
-        }
+        this.builderViewport.updateSocketMarkers();
       }
 
       if (action.machineName) {
@@ -495,6 +565,8 @@ export class UIController {
 
       if (e.code === 'KeyZ') sc.throttle = 1.0;
       if (e.code === 'KeyX') sc.throttle = 0.0;
+      if (e.code === 'KeyC') sc.centerGimbal();
+      if (e.code === 'KeyV') sc.setEngineIgnited(!sc.getCurrentStage()?.ignited);
       if (e.code === 'Space') {
         e.preventDefault();
         sc.separateStage();
@@ -528,6 +600,8 @@ export class UIController {
       }
     } else if (this.currentMode === 'CAD') {
       this.cadStudio?.render();
+    } else if (this.currentMode === 'ROCKETRY') {
+      this.rocketryStudio?.render();
     } else if (this.currentMode === 'ROBOTICS') {
       this.roboticsStudio?.render();
     }
@@ -540,6 +614,14 @@ export class UIController {
       if (this.activeKeys.has('ControlLeft') || this.activeKeys.has('ControlRight')) {
         sc.throttle = Math.max(0.0, sc.throttle - 0.02);
       }
+
+      let tvcPitch = sc.gimbalPitchDeg;
+      let tvcYaw = sc.gimbalYawDeg;
+      if (this.activeKeys.has('KeyI')) tvcPitch += 0.08;
+      if (this.activeKeys.has('KeyK')) tvcPitch -= 0.08;
+      if (this.activeKeys.has('KeyJ')) tvcYaw -= 0.08;
+      if (this.activeKeys.has('KeyL')) tvcYaw += 0.08;
+      if (tvcPitch !== sc.gimbalPitchDeg || tvcYaw !== sc.gimbalYawDeg) sc.setGimbal(tvcPitch, tvcYaw);
 
       let pitch = 0, yaw = 0, roll = 0;
       if (this.activeKeys.has('KeyW')) pitch += 1.0;

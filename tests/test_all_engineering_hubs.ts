@@ -24,13 +24,13 @@ function assert(condition: boolean, testName: string, detail?: string) {
 
 async function runAllHubTests() {
   console.log('===============================================================');
-  console.log('🌌 ASTRODYNE & AXIOM: 5-STUDIO MULTI-ENGINEERING TEST SUITE');
+  console.log('ASTRODYNE & AXIOM: 5-STUDIO MULTI-ENGINEERING TEST SUITE');
   console.log('===============================================================\n');
 
   // -----------------------------------------------------------------
   // 1. OPENSCAD & MANIFOLD-3D CSG ENGINE
   // -----------------------------------------------------------------
-  console.log('--- 1. OpenSCAD & Manifold-3D WASM CSG Engine ---');
+  console.log('--- 1. Manifold-3D WASM CSG Engine ---');
   try {
     const cadEngine = await ManifoldCADEngine.getInstance();
     const evaluator = new OpenSCADEvaluator(cadEngine);
@@ -44,7 +44,7 @@ async function runAllHubTests() {
     const cadRes = await evaluator.evaluateScript(testScript);
     assert(cadRes.volumeMm3 > 14000 && cadRes.volumeMm3 < 16000, `CSG Difference Volume correct (${cadRes.volumeMm3.toFixed(1)} mm³)`);
     assert(cadRes.numTriangles > 50, `Valid manifold mesh generated (${cadRes.numTriangles} tris, ${cadRes.numVertices} verts)`);
-    assert(cadRes.stlData.includes('solid OpenSCAD_Model') && cadRes.stlData.includes('endsolid OpenSCAD_Model'), 'Valid ASCII STL generated for 3D printing');
+    assert(cadRes.stlData.includes('solid Manifold_CSG_Model') && cadRes.stlData.includes('endsolid Manifold_CSG_Model'), 'Valid ASCII STL generated for 3D printing');
   } catch (err: any) {
     assert(false, 'Manifold CSG Engine', err.message);
   }
@@ -52,7 +52,7 @@ async function runAllHubTests() {
   // -----------------------------------------------------------------
   // 2. OPENROCKET BARROWMAN STABILITY & RK4 TRAJECTORY
   // -----------------------------------------------------------------
-  console.log('\n--- 2. OpenRocket Barrowman Aerodynamics (NASA TR R-58) ---');
+  console.log('\n--- 2. Native Barrowman + RK4 Aerodynamics (NASA TR R-58) ---');
   const rocketConfig: RocketAeroConfig = {
     name: 'Astrodyne-Pro38',
     noseCone: { shape: 'ogive', lengthM: 0.35, baseDiameterM: 0.075, massKg: 0.18 },
@@ -127,11 +127,11 @@ async function runAllHubTests() {
 
   const copilot = new AstraAICopilot(engine, spacecraft);
 
-  const cadMsg = await copilot.sendMessage('Generate an OpenSCAD motor mount plate and export STL');
+  const cadMsg = await copilot.sendMessage('Generate a Manifold CSG motor mount plate and export STL');
   assert(cadMsg.action?.action === 'generate_cad_model', 'AI generated "generate_cad_model" action for CAD request');
-  assert(cadMsg.action?.cadScript?.includes('difference') === true, 'AI generated valid parametric OpenSCAD script');
+  assert(cadMsg.action?.cadScript?.includes('difference') === true, 'AI generated valid parametric Manifold CSG script');
 
-  const aeroMsg = await copilot.sendMessage('Run Barrowman aerodynamic stability analysis in OpenRocket');
+  const aeroMsg = await copilot.sendMessage('Run native Barrowman aerodynamic stability analysis');
   assert(aeroMsg.action?.action === 'simulate_rocket_aero', 'AI generated "simulate_rocket_aero" action');
   assert(aeroMsg.action?.rocketConfig?.noseCone?.shape === 'ogive', 'AI configured rocket nosecone and fin geometry');
 
@@ -140,7 +140,7 @@ async function runAllHubTests() {
   assert((robMsg.action?.dhChain?.length || 0) === 6, 'AI synthesized 6-DOF robotic manipulator chain');
 
   console.log('\n===============================================================');
-  console.log(`🏁 5-STUDIO MULTI-ENGINEERING TEST SUITE: ${passed} PASSED, ${failed} FAILED`);
+  console.log(`5-STUDIO MULTI-ENGINEERING TEST SUITE: ${passed} PASSED, ${failed} FAILED`);
   console.log('===============================================================\n');
 
   if (failed > 0) process.exit(1);

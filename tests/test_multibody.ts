@@ -17,7 +17,7 @@ function assertClose(actual: number, expected: number, tolerance: number, testNa
 }
 
 console.log('===============================================================');
-console.log('🧪 AXIOM PHASE 2: MULTIBODY & DRIVETRAIN SYSTEM TEST SUITE');
+console.log('AXIOM PHASE 2: MULTIBODY & DRIVETRAIN SYSTEM TEST SUITE');
 console.log('===============================================================\n');
 
 // ---------------------------------------------------------------------
@@ -118,7 +118,7 @@ const expectedCmX = (0.15 * 0 + 0.38 * 0.5) / totalCalculatedMass;
 assertClose(graph.assembly.centerOfMassWorld[0], expectedCmX, 0.001, `Center of Mass X matches analytical prediction (${expectedCmX.toFixed(4)} m)`);
 
 console.log('\n===============================================================');
-console.log(`🏁 TEST SUITE COMPLETE: ${passed} PASSED, ${failed} FAILED`);
+console.log(`TEST SUITE COMPLETE: ${passed} PASSED, ${failed} FAILED`);
 console.log('===============================================================\n');
 
 if (failed > 0) {

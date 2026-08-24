@@ -32,6 +32,8 @@ export interface RocketAeroConfig {
   motorThrustN: number;
   motorBurnTimeSec: number;
   propellantMassKg: number;
+  cadEstimatedCd?: number;
+  cadReferenceAreaM2?: number;
 }
 
 export interface BarrowmanResult {

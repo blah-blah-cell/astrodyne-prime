@@ -2,16 +2,20 @@
   "name": "astrodyne-prime",
   "version": "2.0.0",
   "private": true,
-  "description": "ASTRODYNE PRIME: Next-Generation WebGPU Spaceflight, Relativistic Astrodynamics & AI Orbital Physics Lab.",
+  "description": "Browser-based CAD, assembly, aerodynamics, robotics, and spaceflight engineering workstation.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "node tests/physics-verification.js",
+    "openrocket:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-openrocket-bridge.ps1",
+    "openrocket:test": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/test-openrocket-bridge.ps1",
+    "test": "node tests/physics-verification.js && tsx tests/test_all_engineering_hubs.ts && tsx tests/test_phase4.ts && tsx tests/test_phase56.ts && tsx tests/test_phase7.ts",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@0x62/jsbsim-wasm": "^1.2.4-beta.4",
     "@dimforge/rapier3d-compat": "^0.20.0",
+    "@tx-code/occt-js": "^0.1.7",
     "@types/three": "^0.185.4",
     "lucide": "^0.475.0",
     "manifold-3d": "^3.5.1",
@@ -19,6 +23,7 @@
   },
   "devDependencies": {
     "@webgpu/types": "^0.1.54",
+    "tsx": "^4.20.5",
     "typescript": "^5.7.3",
     "vite": "^6.2.0"
   }

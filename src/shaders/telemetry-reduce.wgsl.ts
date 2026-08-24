@@ -52,7 +52,9 @@ fn main(
 
   // Stride loop across particles
   var idx = global_id.x;
-  let stride = 256u * 64u; // grid stride
+  // One workgroup performs a strided reduction across the complete buffer.
+  // The previous 16,384 stride sampled only 256 particles out of each block.
+  let stride = 256u;
 
   while (idx < count) {
     let p = posMass[idx];

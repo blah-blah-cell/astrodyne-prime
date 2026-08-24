@@ -1,0 +1,8 @@
+OpenSCAD WebAssembly snapshot 2026.06.08
+
+Source: https://files.openscad.org/snapshots/OpenSCAD-2026.06.08-WebAssembly-web.zip
+SHA-256: 8b6cf86e4986f12bf46b08cd6836ca27e8f7bf695f7969cefa85ded44223bf4a
+Upstream: https://github.com/openscad/openscad and https://github.com/openscad/openscad-wasm
+License: GNU General Public License version 2 or later. See https://github.com/openscad/openscad/blob/master/COPYING
+
+The corresponding source is available from the upstream repositories above.

@@ -71,6 +71,16 @@ export interface PartDefinition {
     burnTimeSec?: number;
     propellantMassKg?: number;
     dragCoefficientCd?: number;
+    controlSurfaceAreaM2?: number;
+    controlMomentArmM?: number;
+
+    // Electrical power bus
+    batteryCapacityAh?: number;
+    batteryInternalResistanceOhm?: number;
+    batteryStateOfCharge?: number;
+    solarPanelAreaM2?: number;
+    solarEfficiency?: number;
+    motorTorqueConstantNmPerA?: number;
   };
 }
 

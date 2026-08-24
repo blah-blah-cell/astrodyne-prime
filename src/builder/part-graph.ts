@@ -74,6 +74,22 @@ export class PartGraph {
     }
   }
 
+  public disconnectPart(instanceId: string): number {
+    const part = this.assembly.parts.get(instanceId);
+    if (!part) return 0;
+    const connections = [...part.attachedSockets.values()];
+    for (const connection of connections) {
+      const target = this.assembly.parts.get(connection.targetPartId);
+      if (!target) continue;
+      for (const [socketId, reverse] of target.attachedSockets.entries()) {
+        if (reverse.targetPartId === instanceId) target.attachedSockets.delete(socketId);
+      }
+    }
+    const count = part.attachedSockets.size;
+    part.attachedSockets.clear();
+    return count;
+  }
+
   public recomputeMassAndCenter(): void {
     let totalMass = 0;
     const weightedPos = new THREE.Vector3(0, 0, 0);

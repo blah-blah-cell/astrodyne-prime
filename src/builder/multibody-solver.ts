@@ -1,4 +1,5 @@
 import RAPIER from '@dimforge/rapier3d-compat';
+import { ToolchainRegistry } from '../engineering/toolchain-registry.js';
 import * as THREE from 'three';
 import { PartAssembly, PartDefinition, SocketType } from './types.js';
 
@@ -30,16 +31,23 @@ export class MultibodySolver {
 
   public async init(): Promise<void> {
     if (this.isInitialized) return;
-    await RAPIER.init();
-    const gravity = { x: 0.0, y: -9.81, z: 0.0 };
-    this.world = new RAPIER.World(gravity);
+    ToolchainRegistry.setState('rapier', 'loading');
+    try {
+      await RAPIER.init();
+      const gravity = { x: 0.0, y: -9.81, z: 0.0 };
+      this.world = new RAPIER.World(gravity);
 
-    // Ground plane collider
-    const groundDesc = RAPIER.ColliderDesc.cuboid(50.0, 0.5, 50.0).setTranslation(0.0, -0.5, 0.0);
-    this.world.createCollider(groundDesc);
+      // Ground plane collider
+      const groundDesc = RAPIER.ColliderDesc.cuboid(50.0, 0.5, 50.0).setTranslation(0.0, -0.5, 0.0);
+      this.world.createCollider(groundDesc);
 
-    this.isInitialized = true;
-    console.log('[MultibodySolver] Rapier3D WASM Multibody Physics Engine Ready.');
+      this.isInitialized = true;
+      console.log('[MultibodySolver] Rapier3D WASM Multibody Physics Engine Ready.');
+      ToolchainRegistry.setState('rapier', 'ready');
+    } catch (error) {
+      ToolchainRegistry.setState('rapier', 'unavailable');
+      throw error;
+    }
   }
 
   public buildSimulationWorld(
@@ -70,7 +78,16 @@ export class MultibodySolver {
       const [dimX, dimY, dimZ] = def.dimensions;
       let colliderDesc: RAPIER.ColliderDesc;
 
-      if (def.physicsShape === 'CYLINDER') {
+      if (def.physicsShape === 'HULL' && instance.mesh instanceof THREE.Mesh) {
+        const position = instance.mesh.geometry.getAttribute('position');
+        const points = new Float32Array(position.count * 3);
+        for (let index = 0; index < position.count; index++) {
+          points[index * 3] = position.getX(index) * instance.mesh.scale.x;
+          points[index * 3 + 1] = position.getY(index) * instance.mesh.scale.y;
+          points[index * 3 + 2] = position.getZ(index) * instance.mesh.scale.z;
+        }
+        colliderDesc = RAPIER.ColliderDesc.convexHull(points) ?? RAPIER.ColliderDesc.cuboid(dimX / 2, dimY / 2, dimZ / 2);
+      } else if (def.physicsShape === 'CYLINDER') {
         colliderDesc = RAPIER.ColliderDesc.cylinder(dimY / 2, dimX / 2);
       } else if (def.physicsShape === 'CONE') {
         colliderDesc = RAPIER.ColliderDesc.cone(dimY / 2, dimX / 2);

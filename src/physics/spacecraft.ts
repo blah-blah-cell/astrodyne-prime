@@ -7,6 +7,7 @@ import {
   SpacecraftTelemetry,
   TrajectoryPoint
 } from './types';
+import { AerodynamicControlSurfaceModel } from './aerodynamic-controls.js';
 
 export interface PlumeParticle {
   x: number;
@@ -43,9 +44,20 @@ export class Spacecraft {
 
   // Throttle & Controls
   public throttle = 0.0; // 0.0 to 1.0
+  public gimbalPitchDeg = 0;
+  public gimbalYawDeg = 0;
+  public gimbalLimitDeg = 6;
+  public tvcAngularRateRadSec = 1.2;
   public rcsTranslation: [number, number, number] = [0, 0, 0];
   public rcsTorque: [number, number, number] = [0, 0, 0];
   public sasMode: SASMode = SASMode.MANUAL;
+  public aerodynamicControlsEnabled = true;
+  public controlSurfaceAreaM2 = 0.08;
+  public controlSurfaceMomentArmM = 1.2;
+  public aerodynamicControlTorque: [number, number, number] = [0, 0, 0];
+  public dynamicsMode: 'normalized' | 'si-km' = 'normalized';
+  public referenceAreaM2 = 1.8;
+  public dragCoefficient = 0.45;
 
   // Multi-Stage Configuration
   public stages: RocketStage[] = [];
@@ -82,6 +94,8 @@ export class Spacecraft {
   public reentryHeat = 0;
   public currentGForce = 1.0;
   public currentThrustKN = 0;
+  public currentMassFlowRate = 0;
+  public currentThrustDirection: [number, number, number] = [0, 1, 0];
   public deltaVRemaining = 0;
 
   // Orbital Elements
@@ -187,7 +201,7 @@ export class Spacecraft {
     for (let i = this.currentStageIndex; i < this.stages.length; i++) {
       maxFuel += this.stages[i].maxFuelMass;
     }
-    return Math.max(maxFuel, 1.0);
+    return Math.max(maxFuel, 1e-9);
   }
 
   public getCurrentStage(): RocketStage | null {
@@ -241,7 +255,7 @@ export class Spacecraft {
         const stageInitial = runningMass;
         const stageFinal = stageInitial - s.fuelMass;
         if (stageFinal > 0) {
-          const stageDV = s.isp * g0 * Math.log(stageInitial / stageFinal) * 0.1; // scaled for sim units
+          const stageDV = s.isp * g0 * Math.log(stageInitial / stageFinal);
           totalDV += stageDV;
         }
         runningMass -= (s.dryMass + s.fuelMass);
@@ -254,6 +268,39 @@ export class Spacecraft {
   // Set flight computer SAS direction
   public setSASMode(mode: SASMode): void {
     this.sasMode = mode;
+  }
+
+  public setGimbal(pitchDeg: number, yawDeg: number): void {
+    const limit = Math.max(0, Math.min(15, this.gimbalLimitDeg));
+    this.gimbalPitchDeg = Math.max(-limit, Math.min(limit, Number.isFinite(pitchDeg) ? pitchDeg : 0));
+    this.gimbalYawDeg = Math.max(-limit, Math.min(limit, Number.isFinite(yawDeg) ? yawDeg : 0));
+    this.currentThrustDirection = this.calculateThrustDirection();
+  }
+
+  public setGimbalLimit(limitDeg: number): void {
+    this.gimbalLimitDeg = Math.max(0, Math.min(15, Number.isFinite(limitDeg) ? limitDeg : 6));
+    this.setGimbal(this.gimbalPitchDeg, this.gimbalYawDeg);
+  }
+
+  public centerGimbal(): void {
+    this.setGimbal(0, 0);
+  }
+
+  public setEngineIgnited(ignited: boolean): void {
+    const stage = this.getCurrentStage();
+    if (stage) stage.ignited = ignited && stage.fuelMass > 0;
+  }
+
+  private calculateThrustDirection(): [number, number, number] {
+    const pitch = this.gimbalPitchDeg * Math.PI / 180;
+    const yaw = this.gimbalYawDeg * Math.PI / 180;
+    const cosPitch = Math.cos(pitch);
+    const direction: [number, number, number] = [
+      this.forward[0] * cosPitch * Math.cos(yaw) + this.up[0] * Math.sin(pitch) + this.right[0] * cosPitch * Math.sin(yaw),
+      this.forward[1] * cosPitch * Math.cos(yaw) + this.up[1] * Math.sin(pitch) + this.right[1] * cosPitch * Math.sin(yaw),
+      this.forward[2] * cosPitch * Math.cos(yaw) + this.up[2] * Math.sin(pitch) + this.right[2] * cosPitch * Math.sin(yaw)
+    ];
+    return this.normalize(direction);
   }
 
   // Arm or add maneuver node
@@ -305,44 +352,68 @@ export class Spacecraft {
     // Update primary parent celestial body
     this.updatePrimaryBody(celestialBodies);
 
-    // Launch Pad status
-    if (this.isLaunchPad) {
-      if (this.throttle > 0.01) {
-        this.isLaunchPad = false; // Liftoff!
-      } else {
-        // Sit stationary on rotating body surface
-        this.position = [...this.launchPadLocation];
-        this.velocity = [0, 0, 0];
-        this.acceleration = [0, 0, 0];
-        this.currentGForce = 1.0;
-        this.updateKeplerianElements();
-        return;
-      }
-    }
-
     const totalMass = this.getTotalMass();
     const stage = this.getCurrentStage();
 
     // 1. Propulsion & Fuel Consumption
     let thrustForce = 0;
     this.currentThrustKN = 0;
+    this.currentMassFlowRate = 0;
+    this.currentThrustDirection = this.calculateThrustDirection();
 
-    if (stage && stage.fuelMass > 0 && this.throttle > 0) {
+    if (stage && stage.ignited && stage.fuelMass > 0 && this.throttle > 0) {
       const burn = stage.burnRate * this.throttle * dt;
       const actualBurn = Math.min(stage.fuelMass, burn);
       stage.fuelMass -= actualBurn;
 
       const effectiveThrottle = burn > 0 ? (actualBurn / burn) * this.throttle : 0;
       thrustForce = stage.maxThrust * effectiveThrottle;
-      this.currentThrustKN = thrustForce;
+      this.currentThrustKN = this.dynamicsMode === 'si-km' ? thrustForce / 1000 : thrustForce;
+      this.currentMassFlowRate = dt > 0 ? actualBurn / dt : stage.burnRate * effectiveThrottle;
 
       if (stage.fuelMass <= 0) {
         stage.fuelMass = 0;
+        stage.ignited = false;
       }
       this.calculateDeltaV();
 
       // Emit rocket exhaust particles
       this.spawnPlumeParticles(effectiveThrottle);
+    }
+
+    const thrustAccelerationScale = this.dynamicsMode === 'si-km' ? 1 / (totalMass * 1000) : 1 / totalMass;
+    const thrustAccel: [number, number, number] = [
+      this.currentThrustDirection[0] * thrustForce * thrustAccelerationScale,
+      this.currentThrustDirection[1] * thrustForce * thrustAccelerationScale,
+      this.currentThrustDirection[2] * thrustForce * thrustAccelerationScale
+    ];
+    const appliedGravity = this.dynamicsMode === 'si-km' ? this.calculateSIGravity() : gravityAccel;
+
+    // A launch clamp releases only when the net acceleration points away from
+    // the primary body. Engines may still consume propellant while restrained.
+    if (this.isLaunchPad) {
+      const rx = this.launchPadLocation[0] - this.primaryBodyPos[0];
+      const ry = this.launchPadLocation[1] - this.primaryBodyPos[1];
+      const rz = this.launchPadLocation[2] - this.primaryBodyPos[2];
+      const radialLength = Math.max(Math.hypot(rx, ry, rz), 1e-9);
+      const radial: [number, number, number] = [rx / radialLength, ry / radialLength, rz / radialLength];
+      const outwardAcceleration =
+        (thrustAccel[0] + appliedGravity[0]) * radial[0] +
+        (thrustAccel[1] + appliedGravity[1]) * radial[1] +
+        (thrustAccel[2] + appliedGravity[2]) * radial[2];
+
+      if (this.throttle <= 0.01 || outwardAcceleration <= 0) {
+        this.position = [...this.launchPadLocation];
+        this.velocity = [0, 0, 0];
+        this.acceleration = [0, 0, 0];
+        this.currentGForce = 1 + Math.hypot(...thrustAccel) / (this.dynamicsMode === 'si-km' ? 0.00980665 : 9.80665);
+        this.dynamicPressure = 0;
+        this.updateKeplerianElements();
+        this.updatePlumeParticles(dt);
+        return;
+      }
+
+      this.isLaunchPad = false;
     }
 
     // 2. SAS Guidance & Attitude Alignment
@@ -353,12 +424,6 @@ export class Spacecraft {
     this.updateAtmosphericDrag(dragAccel);
 
     // 4. Net Acceleration = Gravity + Thrust + Drag + RCS
-    const thrustAccel: [number, number, number] = [
-      (this.forward[0] * thrustForce) / totalMass,
-      (this.forward[1] * thrustForce) / totalMass,
-      (this.forward[2] * thrustForce) / totalMass
-    ];
-
     const rcsForceMag = 15.0;
     const rcsAccel: [number, number, number] = [
       (this.right[0] * this.rcsTranslation[0] + this.up[0] * this.rcsTranslation[1] + this.forward[0] * this.rcsTranslation[2]) * (rcsForceMag / totalMass),
@@ -367,9 +432,9 @@ export class Spacecraft {
     ];
 
     this.acceleration = [
-      gravityAccel[0] + thrustAccel[0] + dragAccel[0] + rcsAccel[0],
-      gravityAccel[1] + thrustAccel[1] + dragAccel[1] + rcsAccel[1],
-      gravityAccel[2] + thrustAccel[2] + dragAccel[2] + rcsAccel[2]
+      appliedGravity[0] + thrustAccel[0] + dragAccel[0] + rcsAccel[0],
+      appliedGravity[1] + thrustAccel[1] + dragAccel[1] + rcsAccel[1],
+      appliedGravity[2] + thrustAccel[2] + dragAccel[2] + rcsAccel[2]
     ];
 
     // G-Force (felt acceleration magnitude, excluding pure gravity in free-fall)
@@ -378,7 +443,7 @@ export class Spacecraft {
       thrustAccel[1] + dragAccel[1] + rcsAccel[1],
       thrustAccel[2] + dragAccel[2] + rcsAccel[2]
     );
-    this.currentGForce = feltAccel / 9.80665 + 1.0;
+    this.currentGForce = feltAccel / (this.dynamicsMode === 'si-km' ? 0.00980665 : 9.80665) + 1.0;
 
     // 5. Integrate Velocity and Position (Symplectic Verlet step)
     this.velocity[0] += this.acceleration[0] * dt;
@@ -431,6 +496,15 @@ export class Spacecraft {
     }
   }
 
+  private calculateSIGravity(): [number, number, number] {
+    const rx = this.position[0] - this.primaryBodyPos[0];
+    const ry = this.position[1] - this.primaryBodyPos[1];
+    const rz = this.position[2] - this.primaryBodyPos[2];
+    const distance = Math.max(Math.hypot(rx, ry, rz), this.primaryBodyRadius);
+    const magnitude = 0.00980665 * (this.primaryBodyRadius * this.primaryBodyRadius) / (distance * distance);
+    return [-rx / distance * magnitude, -ry / distance * magnitude, -rz / distance * magnitude];
+  }
+
   private updateAtmosphericDrag(outDragAccel: [number, number, number]): void {
     const rx = this.position[0] - this.primaryBodyPos[0];
     const ry = this.position[1] - this.primaryBodyPos[1];
@@ -453,23 +527,25 @@ export class Spacecraft {
 
     if (speed < 1e-4) return;
 
-    // Dynamic pressure Q = 0.5 * rho * v^2
-    const Q = 0.5 * rho * speed * speed;
-    this.dynamicPressure = Q;
-    if (Q > this.maxQ) this.maxQ = Q;
+    // SI launch mode stores velocity in km/s and reports dynamic pressure in kPa.
+    const speedForPressure = this.dynamicsMode === 'si-km' ? speed * 1000 : speed;
+    const pressurePa = 0.5 * rho * speedForPressure * speedForPressure;
+    const displayedPressure = this.dynamicsMode === 'si-km' ? pressurePa / 1000 : pressurePa;
+    this.dynamicPressure = displayedPressure;
+    if (displayedPressure > this.maxQ) this.maxQ = displayedPressure;
 
-    // Aerodynamic Drag: F_drag = -0.5 * rho * v^2 * Cd * A * v_hat
-    const Cd = 0.45;
-    const A = 1.8;
-    const dragForceMag = Q * Cd * A * 0.05;
+    const dragForceMag = this.dynamicsMode === 'si-km'
+      ? pressurePa * this.dragCoefficient * this.referenceAreaM2
+      : pressurePa * this.dragCoefficient * this.referenceAreaM2 * 0.05;
     const totalMass = this.getTotalMass();
+    const dragAccelerationScale = this.dynamicsMode === 'si-km' ? 1 / (totalMass * 1000) : 1 / totalMass;
 
-    outDragAccel[0] = -(vx / speed) * (dragForceMag / totalMass);
-    outDragAccel[1] = -(vy / speed) * (dragForceMag / totalMass);
-    outDragAccel[2] = -(vz / speed) * (dragForceMag / totalMass);
+    outDragAccel[0] = -(vx / speed) * dragForceMag * dragAccelerationScale;
+    outDragAccel[1] = -(vy / speed) * dragForceMag * dragAccelerationScale;
+    outDragAccel[2] = -(vz / speed) * dragForceMag * dragAccelerationScale;
 
     // Reentry heating index
-    this.reentryHeat = Math.min(1.0, (rho * speed * speed * speed * 0.00008));
+    this.reentryHeat = Math.min(1.0, rho * speedForPressure * speedForPressure * speedForPressure * 8e-14);
   }
 
   private updateAttitudeGuidance(dt: number): void {
@@ -478,6 +554,28 @@ export class Spacecraft {
     let targetPitchRate = this.rcsTorque[0] * torqueRate;
     let targetYawRate = this.rcsTorque[1] * torqueRate;
     let targetRollRate = this.rcsTorque[2] * torqueRate;
+    const stage = this.getCurrentStage();
+    if (stage?.ignited && stage.fuelMass > 0 && this.throttle > 0 && this.gimbalLimitDeg > 0) {
+      const authority = this.tvcAngularRateRadSec * this.throttle;
+      targetPitchRate += this.gimbalPitchDeg / this.gimbalLimitDeg * authority;
+      targetYawRate += this.gimbalYawDeg / this.gimbalLimitDeg * authority;
+    }
+
+    if (this.aerodynamicControlsEnabled && this.dynamicPressure > 0) {
+      const aero = AerodynamicControlSurfaceModel.evaluate(
+        { pitch: this.rcsTorque[0], yaw: this.rcsTorque[1], roll: this.rcsTorque[2] },
+        this.dynamicPressure,
+        this.controlSurfaceAreaM2,
+        this.controlSurfaceMomentArmM
+      );
+      this.aerodynamicControlTorque = [aero.pitchTorque, aero.yawTorque, aero.rollTorque];
+      const inertiaScale = Math.max(this.getTotalMass() * 0.7, 1);
+      targetPitchRate += aero.pitchTorque / inertiaScale;
+      targetYawRate += aero.yawTorque / inertiaScale;
+      targetRollRate += aero.rollTorque / inertiaScale;
+    } else {
+      this.aerodynamicControlTorque = [0, 0, 0];
+    }
 
     // Automatic SAS Guidance
     if (this.sasMode !== SASMode.MANUAL) {
@@ -814,9 +912,9 @@ export class Spacecraft {
       const plumeSpeed = 45.0 + Math.random() * 25.0;
       const spread = (Math.random() - 0.5) * 4.0;
 
-      const vx = this.velocity[0] - this.forward[0] * plumeSpeed + (this.right[0] + this.up[0]) * spread;
-      const vy = this.velocity[1] - this.forward[1] * plumeSpeed + (this.right[1] + this.up[1]) * spread;
-      const vz = this.velocity[2] - this.forward[2] * plumeSpeed + (this.right[2] + this.up[2]) * spread;
+      const vx = this.velocity[0] - this.currentThrustDirection[0] * plumeSpeed + (this.right[0] + this.up[0]) * spread;
+      const vy = this.velocity[1] - this.currentThrustDirection[1] * plumeSpeed + (this.right[1] + this.up[1]) * spread;
+      const vz = this.velocity[2] - this.currentThrustDirection[2] * plumeSpeed + (this.right[2] + this.up[2]) * spread;
 
       this.plumeParticles.push({
         x: nozzleX,
@@ -874,7 +972,11 @@ export class Spacecraft {
     const fuelPct = maxFuel > 0 ? (fuelMass / maxFuel) * 100 : 0;
 
     const g0 = 9.80665;
-    const twr = totalMass > 0 ? this.currentThrustKN / (totalMass * g0 * 0.1) : 0;
+    const twr = totalMass > 0
+      ? this.dynamicsMode === 'si-km'
+        ? this.currentThrustKN * 1000 / (totalMass * g0)
+        : this.currentThrustKN / (totalMass * g0 * 0.1)
+      : 0;
 
     return {
       active: this.active,
@@ -902,6 +1004,12 @@ export class Spacecraft {
       deltaVRemaining: this.deltaVRemaining,
       thrustKN: this.currentThrustKN,
       throttle: this.throttle,
+      engineIgnited: !!stage?.ignited,
+      massFlowRate: this.currentMassFlowRate,
+      gimbalPitchDeg: this.gimbalPitchDeg,
+      gimbalYawDeg: this.gimbalYawDeg,
+      gimbalLimitDeg: this.gimbalLimitDeg,
+      thrustDirection: [...this.currentThrustDirection],
       twr,
       isp: stage ? stage.isp : 0,
       gForce: this.currentGForce,

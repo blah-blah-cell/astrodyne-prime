@@ -35,20 +35,15 @@ export class AstraAICopilot {
     this.messages.push({
       id: 'init-1',
       role: 'assistant',
-      content: `**ASTRA AI Chief Systems Architect & Flight Director Online** // All Engineering Hubs Active.
+      content: `**Engineering assistant ready**
 
-I have full autonomous control across **5 Integrated Open-Source Engineering Suites**:
-* 🚀 **WebGPU Relativistic Astrodynamics**: Hohmann transfers, circularization burns, SAS attitude, and 500k-particle N-body orbits.
-* 🛠️ **AXIOM Multibody Mechanics**: Modular Part Graph, WASM Rapier3D physics, DC motor torque curves, and gear ratios.
-* 📐 **OpenSCAD / Manifold-3D CAD Studio**: Parametric CSG solid modeling, volume/mass diagnostics, and STL export for 3D printing.
-* 🎯 **OpenRocket Aerodynamics & Stability**: NASA TR R-58 Barrowman Center of Pressure ($X_{cp}$), $X_{cg}$, stability margin calibers, and RK4 apogee prediction.
-* 🤖 **URDF Robotics & Kinematics**: Denavit-Hartenberg (DH) 6-DOF forward kinematics and ROS URDF XML generation.
+I can inspect the current project, calculate maneuvers, analyze telemetry, generate CAD scripts, review aerodynamic stability, and configure robot kinematics.
 
-*Try asking:*
-- *"Generate an OpenSCAD motor mount plate with M3 holes and compile"*
-- *"Run Barrowman aerodynamic stability analysis for a high-power rocket"*
-- *"Configure a 6-DOF robotic manipulator arm with DH parameters"*
-- *"Build a 2-stage rocket and launch it to orbit"*`,
+Examples:
+- Plan a transfer burn.
+- Check the current vehicle telemetry.
+- Generate a motor-mount CAD script.
+- Review rocket stability.`,
       timestamp: Date.now()
     });
   }
@@ -112,8 +107,8 @@ I have full autonomous control across **5 Integrated Open-Source Engineering Sui
       const errorMsg: AIMessage = {
         id: `msg-${Date.now()}`,
         role: 'assistant',
-        content: `⚠️ **AI Uplink Error**: ${err.message || 'Request failed'}.
-Falling back to internal autonomous engineering solver.`,
+        content: `**AI Uplink Error**: ${err.message || 'Request failed'}.
+Falling back to deterministic local engineering tools.`,
         timestamp: Date.now()
       };
       this.messages.push(errorMsg);
@@ -134,7 +129,7 @@ Falling back to internal autonomous engineering solver.`,
     const totalAssembledMassKg = partGraph?.assembly.totalMassKg || 0;
 
     
-    return `You are ASTRA AI, the autonomous Lead Astrodynamics Officer, Aerospace Engineer & Robotics Architect embedded in ASTRODYNE PRIME & AXIOM Multi-Physics Hub.
+    return `You are the engineering assistant embedded in Astrodyne Prime. Give concise, technically grounded help using the current project state and available deterministic actions.
 
 ===================================================================
 1. CURRENT MULTI-ENGINEERING HUB CONTEXT:
@@ -147,10 +142,10 @@ Falling back to internal autonomous engineering solver.`,
 ===================================================================
 2. SUPPORTED DIRECT TOOL ACTIONS (Output ONE valid JSON codeblock):
 ===================================================================
-1. "generate_cad_model": Write OpenSCAD / Manifold-3D parametric script and compile
+1. "generate_cad_model": Write a Manifold CSG parametric script and compile
    { "action": "generate_cad_model", "cadModelName": "NEMA17_Mount", "cadScript": "let plate = cube([42, 42, 5], true);\nlet hole = cylinder(7, 11, 11, 32, true);\nreturn difference(plate, hole);", "exportSTL": false }
 
-2. "simulate_rocket_aero": Run OpenRocket Barrowman aerodynamic stability & trajectory simulation
+2. "simulate_rocket_aero": Run native Barrowman stability and RK4 trajectory analysis
    { "action": "simulate_rocket_aero", "rocketConfig": { "name": "Custom-Pro", "noseCone": { "shape": "ogive", "lengthM": 0.35, "baseDiameterM": 0.075, "massKg": 0.18 }, "bodyTube": { "lengthM": 0.85, "outerDiameterM": 0.075, "innerDiameterM": 0.072, "massKg": 0.32 }, "finSet": { "numFins": 4, "rootChordM": 0.12, "tipChordM": 0.05, "spanM": 0.08, "sweepLengthM": 0.06, "positionFromNoseM": 1.05, "massKg": 0.11 }, "motorThrustN": 480, "motorBurnTimeSec": 2.8, "propellantMassKg": 0.22, "motorMassKg": 0.45, "motorPositionFromNoseM": 1.15 }, "launchAfterAeroSim": false }
 
 3. "configure_robot_chain": Configure 6-DOF URDF Denavit-Hartenberg (DH) robotic chain
@@ -214,7 +209,7 @@ return difference(plate, bore, h1, h2, h3, h4);`;
       };
 
       return {
-        text: `### 📐 OpenSCAD / Manifold-3D Parametric Synthesis
+        text: `### Manifold-3D Parametric CSG
 Synthesized **Guaranteed 2-Manifold Solid CSG Model**:
 - **Geometry**: $42\text{mm} \times 42\text{mm} \times 5\text{mm}$ structural mounting flange.
 - **Center Bore**: $22\text{mm}$ diameter clearance with $4\times$ M3 corner bolt holes on standard $31\text{mm}$ square pitch.
@@ -250,7 +245,7 @@ ${JSON.stringify(action, null, 2)}
       };
 
       return {
-        text: `### 🎯 OpenRocket Aerodynamic & Stability Analysis (NASA TR R-58)
+        text: `### Barrowman Aerodynamic & Stability Analysis (NASA TR R-58)
 Evaluating Barrowman static stability margin and atmospheric ascent:
 - **Nose Cone**: Ogive supersonic profile ($(C_{Na})_N = 2.0$, $X_N = 0.163\text{ m}$).
 - **Fin Set**: 4x Trapezoidal G10 fins ($(C_{Na})_F = 12.8$, $X_F = 1.092\text{ m}$).
@@ -262,7 +257,7 @@ Evaluating Barrowman static stability margin and atmospheric ascent:
 ${JSON.stringify(action, null, 2)}
 \`\`\`
 
-*Opening OpenRocket Aero Lab and rendering dynamic stability diagram.*`,
+*Opening the aerodynamics workspace and rendering the stability result.*`,
         action
       };
     }
@@ -285,7 +280,7 @@ ${JSON.stringify(action, null, 2)}
       };
 
       return {
-        text: `### 🤖 URDF Robotics & Forward Kinematics Chain
+        text: `### URDF Robotics & Forward Kinematics Chain
 Configured **6-DOF Serial Robotic Manipulator**:
 - **Forward Kinematics**: $T_0^6 = \prod_{i=1}^6 A_i(\theta_i, d_i, a_i, \alpha_i)$.
 - **End-Effector Pose**: Position $[0.52, 0.38, 0.41]\text{ m}$, Orientation $[0.0^\circ, 15.0^\circ, 45.0^\circ]$.
@@ -320,7 +315,7 @@ ${JSON.stringify(action, null, 2)}
       };
 
       return {
-        text: `### 🚀 AXIOM Rocket Vehicle Synthesis
+        text: `### AXIOM Rocket Vehicle Synthesis
 Synthesized **High-Performance Aerodynamic Solid Booster Rocket**:
 - **Airframe**: 75mm x 0.8m Lightweight fiberglass fuselage.
 - **Nose Cone**: Low-drag Von Kármán supersonic profile ($C_d = 0.15$).
@@ -339,7 +334,7 @@ ${JSON.stringify(action, null, 2)}
     if (p.includes('launch')) {
       const action: AIManeuverAction = { action: 'launch_custom_vehicle' };
       return {
-        text: `### 🚀 Launch Sequence Initiated
+        text: `### Launch Sequence Initiated
 Compiling active modular DAG into dynamic multi-stage spacecraft and engaging primary ignition!
 
 \`\`\`json
@@ -365,7 +360,7 @@ ${JSON.stringify(action, null, 2)}
       };
 
       return {
-        text: `### 🌌 Celestial Injection: ${action.body?.name}
+        text: `### Celestial Injection: ${action.body?.name}
 Spawning high-gravity point source into the WebGPU Barnes-Hut multipole solver.
 
 \`\`\`json
@@ -388,15 +383,15 @@ ${JSON.stringify(action, null, 2)}
 
     // Default Telemetry Diagnostic
     return {
-      text: `### 🛰️ Live Orbital Flight Diagnostics
+      text: `### Live Orbital Flight Diagnostics
 - **Vehicle**: **${telem.name}** (${telem.fuelPercent.toFixed(1)}% fuel, $\Delta v = ${telem.deltaVRemaining.toFixed(1)}$ m/s)
 - **Altitude**: **${telem.altitude.toFixed(1)} km** | Speed: **${telem.speed.toFixed(2)} km/s**
 - **Apoapsis / Periapsis**: **${telem.apoapsis.toFixed(1)} km** / **${telem.periapsis.toFixed(1)} km**
 - **Eccentricity ($e$)**: **${telem.eccentricity.toFixed(4)}**
 
 *Ask me to:*
-1. *"Generate an OpenSCAD motor mount plate and export STL"*
-2. *"Run Barrowman aerodynamic stability analysis in OpenRocket"*
+1. *"Generate a Manifold CSG motor mount plate and export STL"*
+2. *"Run Barrowman aerodynamic stability analysis"*
 3. *"Configure a 6-DOF URDF robotic arm with DH parameters"*
 4. *"Build a 2-stage rocket in AXIOM and launch it to space"*`
     };

@@ -7,3 +7,5 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .system_generated
+.cache/
+tools/openrocket-bridge/target/

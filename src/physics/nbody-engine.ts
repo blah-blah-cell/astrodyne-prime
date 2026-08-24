@@ -23,6 +23,7 @@ export class NBodyEngine {
   public telemetry: TelemetryTracker;
   public spacecraft: Spacecraft = new Spacecraft();
   public celestialBodies: CelestialBodyInfo[] = [];
+  public simulationTime = 0;
 
   public count = 0;
   public pow2Count = 0;
@@ -99,6 +100,7 @@ export class NBodyEngine {
   }
 
   public initParticles(data: ParticleData): void {
+    this.simulationTime = 0;
     this.count = data.count;
     this.pow2Count = this.nextPowerOf2(this.count);
 
@@ -406,6 +408,7 @@ export class NBodyEngine {
 
     const totalDt = this.params.timeStep * timeWarp;
     const subDt = totalDt / baseSubsteps;
+    this.simulationTime += totalDt;
 
     const commandEncoder = this.device.createCommandEncoder({ label: 'NBody Physics Step' });
 
@@ -718,7 +721,7 @@ export class NBodyEngine {
         pe,
         [Lx, Ly, Lz],
         [comX, comY, comZ],
-        activeCount
+        activeCount > 0 ? activeCount : this.count
       );
     } catch {
       // Buffer busy / unmapped

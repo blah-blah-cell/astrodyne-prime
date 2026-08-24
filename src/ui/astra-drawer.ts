@@ -30,27 +30,27 @@ export class AstraDrawer {
   private buildDOM(): void {
     this.container.innerHTML = `
       <!-- ASTRA AI Copilot Drawer -->
-      <aside id="astra-drawer" class="astra-drawer glass-drawer">
+      <aside id="astra-drawer" class="astra-drawer glass-drawer hidden">
         <div class="drawer-header">
           <div class="drawer-title-group">
-            <span class="drawer-logo">✨</span>
+            <span class="drawer-logo">A</span>
             <div>
-              <div class="drawer-title">ASTRA AI COPILOT</div>
-              <div class="drawer-subtitle">Autonomous Astrodynamics Assistant</div>
+              <div class="drawer-title">ENGINEERING ASSISTANT</div>
+              <div class="drawer-subtitle">Analysis and workflow tools</div>
             </div>
           </div>
           <div class="drawer-actions">
-            <button id="btn-ai-settings" class="btn-icon-header" title="AI Provider & Model Settings">⚙️</button>
-            <button id="btn-close-drawer" class="btn-icon-header" title="Close Drawer">✕</button>
+            <button id="btn-ai-settings" class="btn-icon-header" title="AI Provider & Model Settings">SETTINGS</button>
+            <button id="btn-close-drawer" class="btn-icon-header" title="Close Drawer">CLOSE</button>
           </div>
         </div>
 
         <!-- Quick Action Prompt Chips -->
         <div class="quick-chips-wrapper">
-          <button class="quick-chip" data-prompt="Plan a Hohmann transfer burn from Earth to Mars.">🚀 Hohmann to Mars</button>
-          <button class="quick-chip" data-prompt="Calculate delta-v required to circularize orbit at apoapsis.">⭕ Circularize Orbit</button>
-          <button class="quick-chip" data-prompt="Analyze my current orbital parameters and dynamic pressure stability.">📊 Telemetry Check</button>
-          <button class="quick-chip" data-prompt="Set SAS flight computer to orbital Prograde vector.">🟢 Align Prograde</button>
+          <button class="quick-chip" data-prompt="Plan a Hohmann transfer burn from Earth to Mars.">Hohmann to Mars</button>
+          <button class="quick-chip" data-prompt="Calculate delta-v required to circularize orbit at apoapsis.">Circularize Orbit</button>
+          <button class="quick-chip" data-prompt="Analyze my current orbital parameters and dynamic pressure stability.">Telemetry Check</button>
+          <button class="quick-chip" data-prompt="Set SAS flight computer to orbital Prograde vector.">Align Prograde</button>
         </div>
 
         <!-- Chat Conversation Messages Container -->
@@ -58,7 +58,7 @@ export class AstraDrawer {
 
         <!-- Chat Input Bar -->
         <div class="drawer-input-bar">
-          <input type="text" id="astra-input" placeholder="Ask ASTRA AI to plan a burn or analyze telemetry..." autocomplete="off">
+          <input type="text" id="astra-input" placeholder="Plan a maneuver or analyze telemetry..." autocomplete="off">
           <button id="btn-send-ai" class="btn-send-msg" title="Send message">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -73,13 +73,13 @@ export class AstraDrawer {
         <div class="ai-modal-card glass-panel">
           <div class="modal-header">
             <div class="modal-title-group">
-              <div class="modal-title-icon">⚙️</div>
+              <div class="modal-title-icon">AI</div>
               <div>
                 <div class="modal-title">AI Engine & Model Configuration</div>
                 <div class="modal-subtitle">Configure frontier reasoning LLMs & Bring-Your-Own-Key</div>
               </div>
             </div>
-            <button id="btn-close-settings" class="btn-close-modal">✕</button>
+            <button id="btn-close-settings" class="btn-close-modal">CLOSE</button>
           </div>
 
           <div class="modal-body">
@@ -88,27 +88,27 @@ export class AstraDrawer {
               <label class="form-label">Select AI Provider</label>
               <div class="provider-pill-grid">
                 <button type="button" class="provider-pill active" data-provider="gemini">
-                  <span class="provider-icon">♊</span>
+                  <span class="provider-icon">G</span>
                   <span class="provider-name">Google Gemini</span>
                 </button>
                 <button type="button" class="provider-pill" data-provider="openai">
-                  <span class="provider-icon">✳️</span>
+                  <span class="provider-icon">O</span>
                   <span class="provider-name">OpenAI</span>
                 </button>
                 <button type="button" class="provider-pill" data-provider="anthropic">
-                  <span class="provider-icon">🪸</span>
+                  <span class="provider-icon">A</span>
                   <span class="provider-name">Anthropic</span>
                 </button>
                 <button type="button" class="provider-pill" data-provider="deepseek">
-                  <span class="provider-icon">🐋</span>
+                  <span class="provider-icon">D</span>
                   <span class="provider-name">DeepSeek</span>
                 </button>
                 <button type="button" class="provider-pill" data-provider="xai">
-                  <span class="provider-icon">⚡</span>
+                  <span class="provider-icon">G</span>
                   <span class="provider-name">xAI Grok</span>
                 </button>
                 <button type="button" class="provider-pill" data-provider="ollama">
-                  <span class="provider-icon">🦙</span>
+                  <span class="provider-icon">L</span>
                   <span class="provider-name">Local Ollama</span>
                 </button>
               </div>
@@ -129,10 +129,10 @@ export class AstraDrawer {
               </div>
               <div class="key-input-wrapper">
                 <input type="password" id="input-ai-key" class="form-input" placeholder="Paste your API key here...">
-                <button type="button" id="btn-toggle-key-vis" class="btn-toggle-vis" title="Show/Hide Key">👁️</button>
+                <button type="button" id="btn-toggle-key-vis" class="btn-toggle-vis" title="Show/Hide Key">SHOW</button>
               </div>
               <div class="form-hint">
-                <span>🔒 Stored strictly in local encrypted browser memory. Never shared.</span>
+                <span>Stored in local browser storage and never sent to our servers.</span>
               </div>
             </div>
 
@@ -156,7 +156,7 @@ export class AstraDrawer {
           </div>
 
           <div class="modal-footer">
-            <button id="btn-test-ai-key" class="btn-modal-secondary">⚡ Test Connection</button>
+            <button id="btn-test-ai-key" class="btn-modal-secondary">Test Connection</button>
             <button id="btn-save-ai-settings" class="btn-modal-primary">Save Configuration</button>
           </div>
         </div>
@@ -230,10 +230,10 @@ export class AstraDrawer {
     btnToggleVis?.addEventListener('click', () => {
       if (inputKey.type === 'password') {
         inputKey.type = 'text';
-        btnToggleVis.textContent = '🔒';
+        btnToggleVis.textContent = 'HIDE';
       } else {
         inputKey.type = 'password';
-        btnToggleVis.textContent = '👁️';
+        btnToggleVis.textContent = 'SHOW';
       }
     });
 
@@ -262,14 +262,14 @@ export class AstraDrawer {
 
       const res = await this.copilot.byok.testConnection();
       btnTest.removeAttribute('disabled');
-      btnTest.textContent = '⚡ Test Connection';
+      btnTest.textContent = 'Test Connection';
 
       if (res.success) {
         statusDiv.className = 'test-key-result success';
-        statusDiv.innerHTML = `✓ ${res.message} <span class="latency-badge">${res.latencyMs}ms</span>`;
+        statusDiv.innerHTML = `CONNECTED · ${res.message} <span class="latency-badge">${res.latencyMs} ms</span>`;
       } else {
         statusDiv.className = 'test-key-result error';
-        statusDiv.textContent = `✕ ${res.message}`;
+        statusDiv.textContent = `ERROR · ${res.message}`;
       }
     });
 
@@ -430,7 +430,7 @@ export class AstraDrawer {
 
       const sender = document.createElement('div');
       sender.className = 'chat-sender-tag';
-      sender.textContent = msg.role === 'user' ? 'FLIGHT DIRECTOR' : 'ASTRA AI';
+      sender.textContent = msg.role === 'user' ? 'YOU' : 'ASSISTANT';
 
       const body = document.createElement('div');
       body.className = 'chat-body-text';
@@ -445,7 +445,7 @@ export class AstraDrawer {
         const actionBtn = document.createElement('button');
         actionBtn.className = 'maneuver-burn-trigger';
         actionBtn.innerHTML = `
-          <span class="burn-fire-icon">🔥</span>
+          <span class="burn-fire-icon">BURN</span>
           <div class="burn-btn-content">
             <div class="burn-title-main">EXECUTE BURN NODE</div>
             <div class="burn-val-sub">ΔV: ${dv.toFixed(1)} m/s (Burn: ${dur.toFixed(1)}s)</div>
