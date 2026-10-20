@@ -424,7 +424,7 @@ export class RocketryStudioView {
     this.currentConfig = result.config;
     const setValue = (selector: string, value: number) => {
       const input = this.container.querySelector(selector) as HTMLInputElement | null;
-      if (input) input.value = value.toFixed(3);
+      if (input) input.value = value.toFixed(EngineeringMeasurements.getPrecision());
     };
     setValue('#aero-nose-len', this.currentConfig.noseCone.lengthM);
     setValue('#aero-fin-root', this.currentConfig.finSet.rootChordM);
@@ -442,7 +442,7 @@ export class RocketryStudioView {
     };
     const getShape = (id: string) => {
       const el = this.container.querySelector(id) as HTMLSelectElement;
-      return (el?.value || 'ogive') as 'ogive' | 'conical' | 'parabolic';
+      return (el?.value || 'ogive') as 'ogive' | 'conical' | 'parabolic' | 'von_karman';
     };
 
     this.currentConfig.noseCone.shape = getShape('#aero-nose-shape');
@@ -522,9 +522,9 @@ export class RocketryStudioView {
         : 'Marginally stable (<1.0 caliber). Safe in calm winds only.';
     }
 
-    if (xcgEl) xcgEl.textContent = `${s.xCg_Total.toFixed(3)} m from nose (${(s.totalMassKg * 1000).toFixed(0)}g total mass)`;
-    if (xcpEl) xcpEl.textContent = `${s.xCp_Total.toFixed(3)} m from nose`;
-    if (cnaEl) cnaEl.textContent = s.cNa_Total.toFixed(2);
+    if (xcgEl) xcgEl.textContent = `${s.xCg_Total.toFixed(EngineeringMeasurements.getPrecision())} m from nose (${(s.totalMassKg * 1000).toFixed(0)}g total mass)`;
+    if (xcpEl) xcpEl.textContent = `${s.xCp_Total.toFixed(EngineeringMeasurements.getPrecision())} m from nose`;
+    if (cnaEl) cnaEl.textContent = s.cNa_Total.toFixed(EngineeringMeasurements.getPrecision() > 2 ? EngineeringMeasurements.getPrecision() : 2);
 
     // Trajectory Metrics
     const setT = (id: string, text: string) => {

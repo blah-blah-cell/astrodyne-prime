@@ -154,6 +154,13 @@ assert.match(scenario.script, /dt="0\.02"/);
 assert.ok(scenario.model.includes('propulsion/rocket-thrust-lbf'));
 console.log('[PASS] JSBSim model generation carries configured geometry, mass, drag, and propulsion into the FDM scenario');
 
+import { BarrowmanAerodynamicsSolver } from '../src/rocketry/barrowman-solver.js';
+const vonKarmanRocket = structuredClone(validationRocket);
+vonKarmanRocket.noseCone.shape = 'von_karman';
+const stability = BarrowmanAerodynamicsSolver.calculate(vonKarmanRocket);
+assert.equal(stability.xCp_Nose, 0.5 * vonKarmanRocket.noseCone.lengthM);
+console.log('[PASS] Von Karman nose cone properly shifts Center of Pressure to 0.5 * L');
+
 const transferVolumeMm3 = 29549.889;
 assert.ok(Math.abs(calculateCADMassKg(transferVolumeMm3, 'steel') - 0.2319666) < 1e-6);
 assert.ok(Math.abs(calculateCADMassKg(transferVolumeMm3, 'pla') - 0.0366419) < 1e-6);

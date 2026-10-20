@@ -69,7 +69,7 @@ export class BarrowmanAerodynamicsSolver {
     let xCp_Nose = 0.466 * rocket.noseCone.lengthM; // Ogive
     if (rocket.noseCone.shape === 'conical') {
       xCp_Nose = 0.666 * rocket.noseCone.lengthM;
-    } else if (rocket.noseCone.shape === 'parabolic') {
+    } else if (rocket.noseCone.shape === 'parabolic' || rocket.noseCone.shape === 'von_karman') {
       xCp_Nose = 0.5 * rocket.noseCone.lengthM;
     }
 
